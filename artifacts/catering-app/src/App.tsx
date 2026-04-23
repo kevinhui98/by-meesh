@@ -2,7 +2,6 @@ import { useEffect, useRef, lazy, Suspense } from "react";
 import {
   ClerkProvider,
   SignIn,
-  SignUp,
   Show,
   useClerk,
 } from "@clerk/react";
@@ -94,26 +93,12 @@ function SignInPage() {
       <SignIn
         routing="path"
         path={`${basePath}/sign-in`}
-        signUpUrl={`${basePath}/sign-up`}
         appearance={clerkAppearance}
       />
     </div>
   );
 }
 
-function SignUpPage() {
-  return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4"
-         style={{ backgroundImage: "radial-gradient(ellipse at top, hsl(22 65% 52% / 0.08) 0%, transparent 60%)" }}>
-      <SignUp
-        routing="path"
-        path={`${basePath}/sign-up`}
-        signInUrl={`${basePath}/sign-in`}
-        appearance={clerkAppearance}
-      />
-    </div>
-  );
-}
 
 function HomeRedirect() {
   return (
@@ -181,7 +166,6 @@ function ClerkProviderWithRoutes() {
       proxyUrl={clerkProxyUrl}
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
-      signUpUrl={`${basePath}/sign-up`}
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
@@ -193,7 +177,9 @@ function ClerkProviderWithRoutes() {
             <Suspense fallback={<PageLoader />}><Book /></Suspense>
           </Route>
           <Route path="/sign-in/*?" component={SignInPage} />
-          <Route path="/sign-up/*?" component={SignUpPage} />
+          <Route path="/sign-up/*?">
+            <Redirect to="/sign-in" />
+          </Route>
           <Route path="/dashboard">
             <ProtectedRoute component={Dashboard} />
           </Route>

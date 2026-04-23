@@ -1,20 +1,12 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response } from "express";
+import { requireOwner } from "../middlewares/auth";
 import { db } from "@workspace/db";
 import { dishesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { getAuth } from "@clerk/express";
+
 import { z } from "zod";
 
 const router = Router();
-
-function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  const auth = getAuth(req);
-  if (!auth?.userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  next();
-}
 
 const ingredientSchema = z.object({
   name: z.string(),
@@ -54,7 +46,7 @@ router.get("/", async (_req: Request, res: Response): Promise<void> => {
 // POST /api/dishes — auth required
 router.post(
   "/",
-  requireAuth,
+  requireOwner,
   async (req: Request, res: Response): Promise<void> => {
     const parsed = dishBodySchema.safeParse(req.body);
     if (!parsed.success) {
@@ -103,7 +95,7 @@ router.get(
 // PATCH /api/dishes/:id — auth required
 router.patch(
   "/:id",
-  requireAuth,
+  requireOwner,
   async (req: Request<{ id: string }>, res: Response): Promise<void> => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -150,7 +142,7 @@ router.patch(
 // DELETE /api/dishes/:id — auth required
 router.delete(
   "/:id",
-  requireAuth,
+  requireOwner,
   async (req: Request<{ id: string }>, res: Response): Promise<void> => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {

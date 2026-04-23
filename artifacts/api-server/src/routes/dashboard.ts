@@ -1,4 +1,5 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response } from "express";
+import { requireOwner } from "../middlewares/auth";
 import { db } from "@workspace/db";
 import {
   eventRequestsTable,
@@ -7,23 +8,14 @@ import {
 } from "@workspace/db";
 import type { Ingredient, Supply } from "@workspace/db";
 import { eq, inArray } from "drizzle-orm";
-import { getAuth } from "@clerk/express";
+
 
 const router = Router();
-
-function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  const auth = getAuth(req);
-  if (!auth?.userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  next();
-}
 
 // GET /api/dashboard/summary
 router.get(
   "/summary",
-  requireAuth,
+  requireOwner,
   async (_req: Request, res: Response): Promise<void> => {
     const [events, dishes] = await Promise.all([
       db.select().from(eventRequestsTable),
@@ -173,7 +165,7 @@ router.get(
 // GET /api/dashboard/procurement
 router.get(
   "/procurement",
-  requireAuth,
+  requireOwner,
   async (req: Request, res: Response): Promise<void> => {
     const eventIdParam = req.query["eventId"]
       ? parseInt(req.query["eventId"] as string)

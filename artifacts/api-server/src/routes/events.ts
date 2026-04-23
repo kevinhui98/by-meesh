@@ -1,20 +1,12 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response } from "express";
+import { requireOwner } from "../middlewares/auth";
 import { db } from "@workspace/db";
 import { eventRequestsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { getAuth } from "@clerk/express";
+
 import { z } from "zod";
 
 const router = Router();
-
-function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  const auth = getAuth(req);
-  if (!auth?.userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  next();
-}
 
 const createEventSchema = z.object({
   clientName: z.string().min(1),
@@ -42,7 +34,7 @@ function formatEvent(e: typeof eventRequestsTable.$inferSelect) {
 }
 
 // GET /api/events — auth required
-router.get("/", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/", requireOwner, async (req: Request, res: Response): Promise<void> => {
   const status = req.query["status"] as string | undefined;
   const validStatuses = ["new", "in_progress", "confirmed"] as const;
 
@@ -84,7 +76,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
 // GET /api/events/:id — auth required
 router.get(
   "/:id",
-  requireAuth,
+  requireOwner,
   async (req: Request<{ id: string }>, res: Response): Promise<void> => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -106,7 +98,7 @@ router.get(
 // PATCH /api/events/:id — auth required
 router.patch(
   "/:id",
-  requireAuth,
+  requireOwner,
   async (req: Request<{ id: string }>, res: Response): Promise<void> => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -151,7 +143,7 @@ router.patch(
 // DELETE /api/events/:id — auth required
 router.delete(
   "/:id",
-  requireAuth,
+  requireOwner,
   async (req: Request<{ id: string }>, res: Response): Promise<void> => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {

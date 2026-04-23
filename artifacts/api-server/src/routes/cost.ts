@@ -1,4 +1,5 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response } from "express";
+import { requireOwner } from "../middlewares/auth";
 import { db } from "@workspace/db";
 import {
   eventMenusTable,
@@ -7,25 +8,16 @@ import {
 } from "@workspace/db";
 import type { Ingredient, Supply } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { getAuth } from "@clerk/express";
+
 
 const router = Router({ mergeParams: true });
 
 type CostParams = { id: string };
 
-function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  const auth = getAuth(req);
-  if (!auth?.userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  next();
-}
-
 // GET /api/events/:id/cost?margin=1.3
 router.get(
   "/",
-  requireAuth,
+  requireOwner,
   async (req: Request<CostParams>, res: Response): Promise<void> => {
     const eventId = parseInt(req.params.id);
     if (isNaN(eventId)) {

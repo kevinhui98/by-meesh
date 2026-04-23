@@ -1,23 +1,15 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response } from "express";
+import { requireOwner } from "../middlewares/auth";
 import { db } from "@workspace/db";
 import { eventMenusTable, dishesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { getAuth } from "@clerk/express";
+
 import { z } from "zod";
 
 // mergeParams lets us read :id from the parent router (/api/events/:id/menu)
 const router = Router({ mergeParams: true });
 
 type MenuParams = { id: string };
-
-function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  const auth = getAuth(req);
-  if (!auth?.userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  next();
-}
 
 const menuEntryInput = z.object({
   dishId: z.number().int(),
@@ -53,7 +45,7 @@ async function getMenuWithDishes(eventId: number) {
 // GET /api/events/:id/menu
 router.get(
   "/",
-  requireAuth,
+  requireOwner,
   async (req: Request<MenuParams>, res: Response): Promise<void> => {
     const eventId = parseInt(req.params.id);
     if (isNaN(eventId)) {
@@ -68,7 +60,7 @@ router.get(
 // PUT /api/events/:id/menu
 router.put(
   "/",
-  requireAuth,
+  requireOwner,
   async (req: Request<MenuParams>, res: Response): Promise<void> => {
     const eventId = parseInt(req.params.id);
     if (isNaN(eventId)) {
