@@ -1,0 +1,292 @@
+import { useEffect } from "react";
+import { useParams, useLocation, Link } from "wouter";
+import Layout from "@/components/Layout";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  useGetDish,
+  useCreateDish,
+  useUpdateDish,
+  getGetDishesQueryKey,
+  getGetDishQueryKey,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+
+const ingredientSchema = z.object({
+  name: z.string().min(1, "Required"),
+  quantity: z.string().min(1, "Required"),
+  unit: z.string().min(1, "Required"),
+  unitCost: z.coerce.number().min(0, "Must be >= 0"),
+});
+
+const supplySchema = z.object({
+  name: z.string().min(1, "Required"),
+  quantity: z.string().min(1, "Required"),
+  unitCost: z.coerce.number().min(0, "Must be >= 0"),
+});
+
+const schema = z.object({
+  name: z.string().min(1, "Dish name is required"),
+  description: z.string().optional(),
+  recipe: z.string().optional(),
+  prep: z.string().optional(),
+  service: z.string().optional(),
+  flatware: z.string().optional(),
+  category: z.string().optional(),
+  ingredients: z.array(ingredientSchema),
+  supplies: z.array(supplySchema),
+});
+
+type FormData = z.infer<typeof schema>;
+
+const CATEGORIES = ["appetizer", "main", "side", "dessert", "beverage", "other"];
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-card border border-card-border rounded-2xl overflow-hidden">
+      <div className="px-5 py-4 border-b border-border bg-muted/30">
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
+function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-1.5">{label}</label>
+      {children}
+      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
+
+const INPUT_CLASS = "w-full px-3.5 py-2.5 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-shadow";
+const TEXTAREA_CLASS = `${INPUT_CLASS} resize-none`;
+
+export default function DishDetail() {
+  const { id } = useParams<{ id: string }>();
+  const [, navigate] = useLocation();
+  const isNew = id === "new";
+  const dishId = isNew ? 0 : parseInt(id);
+  const qc = useQueryClient();
+
+  const { data: dish } = useGetDish(dishId, {
+    query: { enabled: !isNew, queryKey: getGetDishQueryKey(dishId) },
+  });
+
+  const createDish = useCreateDish();
+  const updateDish = useUpdateDish();
+
+  const { register, control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: { ingredients: [], supplies: [] },
+  });
+
+  const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient } = useFieldArray({ control, name: "ingredients" });
+  const { fields: supplyFields, append: appendSupply, remove: removeSupply } = useFieldArray({ control, name: "supplies" });
+
+  useEffect(() => {
+    if (dish && !isNew) {
+      reset({
+        name: dish.name,
+        description: dish.description ?? "",
+        recipe: dish.recipe ?? "",
+        prep: dish.prep ?? "",
+        service: dish.service ?? "",
+        flatware: dish.flatware ?? "",
+        category: dish.category ?? "",
+        ingredients: (dish.ingredients ?? []) as any,
+        supplies: (dish.supplies ?? []) as any,
+      });
+    }
+  }, [dish, isNew, reset]);
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      const payload = {
+        name: data.name,
+        description: data.description || null,
+        recipe: data.recipe || null,
+        prep: data.prep || null,
+        service: data.service || null,
+        flatware: data.flatware || null,
+        category: data.category || null,
+        ingredients: data.ingredients,
+        supplies: data.supplies,
+      };
+
+      if (isNew) {
+        await createDish.mutateAsync({ data: payload });
+      } else {
+        await updateDish.mutateAsync({ id: dishId, data: payload });
+        qc.invalidateQueries({ queryKey: getGetDishQueryKey(dishId) });
+      }
+      qc.invalidateQueries({ queryKey: getGetDishesQueryKey() });
+      toast.success(isNew ? "Dish created" : "Dish updated");
+      navigate("/dishes");
+    } catch {
+      toast.error("Failed to save dish");
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="max-w-3xl mx-auto px-6 py-8">
+        <div className="flex items-center gap-4 mb-6">
+          <Link href="/dishes">
+            <button className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          </Link>
+          <h1 className="text-xl font-bold text-foreground">
+            {isNew ? "New Dish" : "Edit Dish"}
+          </h1>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {/* Basic info */}
+          <Section title="Basic Information">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Dish name *" error={errors.name?.message}>
+                  <input {...register("name")} placeholder="Seared Duck Breast" className={INPUT_CLASS} />
+                </Field>
+                <Field label="Category">
+                  <select {...register("category")} className={INPUT_CLASS}>
+                    <option value="">Select category...</option>
+                    {CATEGORIES.map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}
+                  </select>
+                </Field>
+              </div>
+              <Field label="Description">
+                <textarea {...register("description")} rows={2} placeholder="Brief description of the dish..." className={TEXTAREA_CLASS} />
+              </Field>
+            </div>
+          </Section>
+
+          {/* Detailed notes */}
+          <Section title="Preparation Details">
+            <div className="space-y-4">
+              <Field label="Recipe notes">
+                <textarea {...register("recipe")} rows={3} placeholder="Key recipe steps, temperatures, techniques..." className={TEXTAREA_CLASS} />
+              </Field>
+              <Field label="Prep instructions">
+                <textarea {...register("prep")} rows={3} placeholder="Day-of prep timeline, mise en place notes..." className={TEXTAREA_CLASS} />
+              </Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Service notes">
+                  <textarea {...register("service")} rows={2} placeholder="Plating, temperature, timing..." className={TEXTAREA_CLASS} />
+                </Field>
+                <Field label="Flatware needed">
+                  <textarea {...register("flatware")} rows={2} placeholder="Dinner fork, steak knife, soup spoon..." className={TEXTAREA_CLASS} />
+                </Field>
+              </div>
+            </div>
+          </Section>
+
+          {/* Ingredients */}
+          <Section title="Ingredients">
+            <div className="space-y-2 mb-3">
+              {ingredientFields.length > 0 && (
+                <div className="grid grid-cols-12 gap-2 px-1 mb-1">
+                  <div className="col-span-4 text-xs font-medium text-muted-foreground">Name</div>
+                  <div className="col-span-2 text-xs font-medium text-muted-foreground">Qty</div>
+                  <div className="col-span-2 text-xs font-medium text-muted-foreground">Unit</div>
+                  <div className="col-span-3 text-xs font-medium text-muted-foreground">Unit cost ($)</div>
+                </div>
+              )}
+              {ingredientFields.map((field, i) => (
+                <div key={field.id} className="grid grid-cols-12 gap-2 items-start">
+                  <div className="col-span-4">
+                    <input {...register(`ingredients.${i}.name`)} placeholder="Ingredient" className={INPUT_CLASS} />
+                    {errors.ingredients?.[i]?.name && <p className="text-xs text-destructive mt-1">{errors.ingredients[i]?.name?.message}</p>}
+                  </div>
+                  <div className="col-span-2">
+                    <input {...register(`ingredients.${i}.quantity`)} placeholder="2" className={INPUT_CLASS} />
+                  </div>
+                  <div className="col-span-2">
+                    <input {...register(`ingredients.${i}.unit`)} placeholder="lbs" className={INPUT_CLASS} />
+                  </div>
+                  <div className="col-span-3">
+                    <input {...register(`ingredients.${i}.unitCost`)} type="number" step="0.01" placeholder="0.00" className={INPUT_CLASS} />
+                  </div>
+                  <div className="col-span-1 flex justify-center pt-2">
+                    <button type="button" onClick={() => removeIngredient(i)} className="text-muted-foreground hover:text-destructive transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => appendIngredient({ name: "", quantity: "", unit: "", unitCost: 0 })}
+              className="flex items-center gap-1.5 text-sm text-primary hover:underline"
+            >
+              <Plus className="w-4 h-4" /> Add ingredient
+            </button>
+          </Section>
+
+          {/* Supplies */}
+          <Section title="Supplies & Equipment">
+            <div className="space-y-2 mb-3">
+              {supplyFields.length > 0 && (
+                <div className="grid grid-cols-12 gap-2 px-1 mb-1">
+                  <div className="col-span-5 text-xs font-medium text-muted-foreground">Name</div>
+                  <div className="col-span-3 text-xs font-medium text-muted-foreground">Quantity</div>
+                  <div className="col-span-3 text-xs font-medium text-muted-foreground">Unit cost ($)</div>
+                </div>
+              )}
+              {supplyFields.map((field, i) => (
+                <div key={field.id} className="grid grid-cols-12 gap-2 items-start">
+                  <div className="col-span-5">
+                    <input {...register(`supplies.${i}.name`)} placeholder="Supply/equipment" className={INPUT_CLASS} />
+                    {errors.supplies?.[i]?.name && <p className="text-xs text-destructive mt-1">{errors.supplies[i]?.name?.message}</p>}
+                  </div>
+                  <div className="col-span-3">
+                    <input {...register(`supplies.${i}.quantity`)} placeholder="1" className={INPUT_CLASS} />
+                  </div>
+                  <div className="col-span-3">
+                    <input {...register(`supplies.${i}.unitCost`)} type="number" step="0.01" placeholder="0.00" className={INPUT_CLASS} />
+                  </div>
+                  <div className="col-span-1 flex justify-center pt-2">
+                    <button type="button" onClick={() => removeSupply(i)} className="text-muted-foreground hover:text-destructive transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => appendSupply({ name: "", quantity: "", unitCost: 0 })}
+              className="flex items-center gap-1.5 text-sm text-primary hover:underline"
+            >
+              <Plus className="w-4 h-4" /> Add supply
+            </button>
+          </Section>
+
+          <div className="flex gap-3 pt-2">
+            <Link href="/dishes">
+              <button type="button" className="flex-1 py-3 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors text-center">
+                Cancel
+              </button>
+            </Link>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 bg-primary text-primary-foreground py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-60"
+            >
+              {isSubmitting ? "Saving..." : (isNew ? "Create Dish" : "Save Changes")}
+            </button>
+          </div>
+        </form>
+      </div>
+    </Layout>
+  );
+}
