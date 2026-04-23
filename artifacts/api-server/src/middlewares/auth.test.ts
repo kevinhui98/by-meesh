@@ -15,33 +15,47 @@ const makeRes = () => {
   return res as unknown as Response & { statusCode: number; body: unknown };
 };
 
+const makeNext = () => {
+  const fn: NextFunction & { called: boolean } = Object.assign(
+    () => { fn.called = true; },
+    { called: false }
+  );
+  return fn;
+};
+
 describe("requireOwner middleware (via makeRequireOwner)", () => {
   before(() => { delete process.env.OWNER_USER_ID; });
   after(() => { delete process.env.OWNER_USER_ID; });
 
+  it("returns 503 when OWNER_USER_ID is not configured (fail closed)", () => {
+    delete process.env.OWNER_USER_ID;
+    const mw = makeRequireOwner(() => "user_any_123");
+    const res = makeRes();
+    const next = makeNext();
+    mw({} as Request, res, next);
+    assert.equal(res.statusCode, 503);
+    assert.equal(next.called, false);
+  });
+
   it("returns 401 when no userId (unauthenticated)", () => {
+    process.env.OWNER_USER_ID = "user_owner_abc";
     const mw = makeRequireOwner(() => null);
     const res = makeRes();
-    const nextSpy: NextFunction & { called: boolean } = Object.assign(
-      () => { nextSpy.called = true; },
-      { called: false }
-    );
-    mw({} as Request, res, nextSpy);
+    const next = makeNext();
+    mw({} as Request, res, next);
     assert.equal(res.statusCode, 401);
-    assert.equal(nextSpy.called, false);
+    assert.equal(next.called, false);
+    delete process.env.OWNER_USER_ID;
   });
 
   it("returns 403 when userId does not match OWNER_USER_ID", () => {
     process.env.OWNER_USER_ID = "user_owner_abc";
     const mw = makeRequireOwner(() => "user_intruder_xyz");
     const res = makeRes();
-    const nextSpy: NextFunction & { called: boolean } = Object.assign(
-      () => { nextSpy.called = true; },
-      { called: false }
-    );
-    mw({} as Request, res, nextSpy);
+    const next = makeNext();
+    mw({} as Request, res, next);
     assert.equal(res.statusCode, 403);
-    assert.equal(nextSpy.called, false);
+    assert.equal(next.called, false);
     delete process.env.OWNER_USER_ID;
   });
 
@@ -49,24 +63,9 @@ describe("requireOwner middleware (via makeRequireOwner)", () => {
     process.env.OWNER_USER_ID = "user_owner_abc";
     const mw = makeRequireOwner(() => "user_owner_abc");
     const res = makeRes();
-    const nextSpy: NextFunction & { called: boolean } = Object.assign(
-      () => { nextSpy.called = true; },
-      { called: false }
-    );
-    mw({} as Request, res, nextSpy);
-    assert.equal(nextSpy.called, true);
+    const next = makeNext();
+    mw({} as Request, res, next);
+    assert.equal(next.called, true);
     delete process.env.OWNER_USER_ID;
-  });
-
-  it("calls next when OWNER_USER_ID is unset (open access for any auth user)", () => {
-    delete process.env.OWNER_USER_ID;
-    const mw = makeRequireOwner(() => "user_any_123");
-    const res = makeRes();
-    const nextSpy: NextFunction & { called: boolean } = Object.assign(
-      () => { nextSpy.called = true; },
-      { called: false }
-    );
-    mw({} as Request, res, nextSpy);
-    assert.equal(nextSpy.called, true);
   });
 });

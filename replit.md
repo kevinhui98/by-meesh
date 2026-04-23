@@ -16,6 +16,17 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Required Environment Variables
+
+| Variable | Where | Description |
+|---|---|---|
+| `DATABASE_URL` | Replit Secrets | PostgreSQL connection string (auto-set by Replit DB) |
+| `CLERK_SECRET_KEY` | Replit Secrets | Clerk backend secret (from Clerk dashboard) |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Replit Secrets | Clerk frontend publishable key |
+| `OWNER_USER_ID` | Replit Secrets | **Required.** Michelle's Clerk user ID (e.g. `user_abc123`). All owner-dashboard API endpoints return 503 until this is set. Find your user ID in the Clerk dashboard → Users. |
+
+> The app is single-owner. Any authenticated Clerk user whose ID does not match `OWNER_USER_ID` receives a 403 Forbidden. If `OWNER_USER_ID` is unset, all private endpoints fail with 503 (fail-closed security default).
+
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages

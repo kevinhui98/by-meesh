@@ -14,28 +14,24 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 }
 
 export function requireOwner(req: Request, res: Response, next: NextFunction): void {
-  const userId = resolveUserId(req);
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  const ownerId = process.env.OWNER_USER_ID;
-  if (ownerId && userId !== ownerId) {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
-  next();
+  return makeRequireOwner(resolveUserId)(req, res, next);
 }
 
 export function makeRequireOwner(getUserId: (req: Request) => string | null) {
   return function (req: Request, res: Response, next: NextFunction): void {
+    const ownerId = process.env.OWNER_USER_ID;
+    if (!ownerId) {
+      res
+        .status(503)
+        .json({ error: "Server misconfiguration: OWNER_USER_ID is not set" });
+      return;
+    }
     const userId = getUserId(req);
     if (!userId) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
-    const ownerId = process.env.OWNER_USER_ID;
-    if (ownerId && userId !== ownerId) {
+    if (userId !== ownerId) {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
