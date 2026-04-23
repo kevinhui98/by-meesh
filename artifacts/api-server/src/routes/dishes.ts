@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { db } from "@workspace/db";
 import { dishesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
@@ -7,13 +7,14 @@ import { z } from "zod";
 
 const router = Router();
 
-const requireAuth = (req: any, res: any, next: any) => {
+function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const auth = getAuth(req);
   if (!auth?.userId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "Unauthorized" });
+    return;
   }
   next();
-};
+}
 
 const ingredientSchema = z.object({
   name: z.string(),
@@ -40,96 +41,125 @@ const dishBodySchema = z.object({
   category: z.string().nullish(),
 });
 
-// GET /api/dishes - public
-router.get("/", async (req, res) => {
+function formatDish(d: typeof dishesTable.$inferSelect) {
+  return { ...d, createdAt: d.createdAt.toISOString() };
+}
+
+// GET /api/dishes — public
+router.get("/", async (_req: Request, res: Response): Promise<void> => {
   const dishes = await db.select().from(dishesTable).orderBy(dishesTable.name);
-  res.json(
-    dishes.map((d) => ({
-      ...d,
-      createdAt: d.createdAt.toISOString(),
-    })),
-  );
+  res.json(dishes.map(formatDish));
 });
 
-// POST /api/dishes - auth required
-router.post("/", requireAuth, async (req, res) => {
-  const parsed = dishBodySchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.message });
-  }
-  const [dish] = await db
-    .insert(dishesTable)
-    .values({
-      name: parsed.data.name,
-      description: parsed.data.description ?? null,
-      recipe: parsed.data.recipe ?? null,
-      prep: parsed.data.prep ?? null,
-      service: parsed.data.service ?? null,
-      flatware: parsed.data.flatware ?? null,
-      ingredients: parsed.data.ingredients,
-      supplies: parsed.data.supplies,
-      category: parsed.data.category ?? null,
-    })
-    .returning();
-  res.status(201).json({ ...dish, createdAt: dish.createdAt.toISOString() });
-});
-
-// GET /api/dishes/:id - public
-router.get("/:id", async (req, res) => {
-  const id = parseInt(req.params.id);
-  const [dish] = await db
-    .select()
-    .from(dishesTable)
-    .where(eq(dishesTable.id, id));
-  if (!dish) return res.status(404).json({ error: "Not found" });
-  res.json({ ...dish, createdAt: dish.createdAt.toISOString() });
-});
-
-// PATCH /api/dishes/:id - auth required
-router.patch("/:id", requireAuth, async (req, res) => {
-  const id = parseInt(req.params.id);
-  const parsed = dishBodySchema.partial().safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.message });
-  }
-  const [dish] = await db
-    .update(dishesTable)
-    .set({
-      ...(parsed.data.name !== undefined && { name: parsed.data.name }),
-      ...(parsed.data.description !== undefined && {
+// POST /api/dishes — auth required
+router.post(
+  "/",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const parsed = dishBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const [dish] = await db
+      .insert(dishesTable)
+      .values({
+        name: parsed.data.name,
         description: parsed.data.description ?? null,
-      }),
-      ...(parsed.data.recipe !== undefined && {
         recipe: parsed.data.recipe ?? null,
-      }),
-      ...(parsed.data.prep !== undefined && { prep: parsed.data.prep ?? null }),
-      ...(parsed.data.service !== undefined && {
+        prep: parsed.data.prep ?? null,
         service: parsed.data.service ?? null,
-      }),
-      ...(parsed.data.flatware !== undefined && {
         flatware: parsed.data.flatware ?? null,
-      }),
-      ...(parsed.data.ingredients !== undefined && {
         ingredients: parsed.data.ingredients,
-      }),
-      ...(parsed.data.supplies !== undefined && {
         supplies: parsed.data.supplies,
-      }),
-      ...(parsed.data.category !== undefined && {
         category: parsed.data.category ?? null,
-      }),
-    })
-    .where(eq(dishesTable.id, id))
-    .returning();
-  if (!dish) return res.status(404).json({ error: "Not found" });
-  res.json({ ...dish, createdAt: dish.createdAt.toISOString() });
-});
+      })
+      .returning();
+    res.status(201).json(formatDish(dish));
+  },
+);
 
-// DELETE /api/dishes/:id - auth required
-router.delete("/:id", requireAuth, async (req, res) => {
-  const id = parseInt(req.params.id);
-  await db.delete(dishesTable).where(eq(dishesTable.id, id));
-  res.status(204).end();
-});
+// GET /api/dishes/:id — public
+router.get(
+  "/:id",
+  async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid id" });
+      return;
+    }
+    const [dish] = await db
+      .select()
+      .from(dishesTable)
+      .where(eq(dishesTable.id, id));
+    if (!dish) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    res.json(formatDish(dish));
+  },
+);
+
+// PATCH /api/dishes/:id — auth required
+router.patch(
+  "/:id",
+  requireAuth,
+  async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid id" });
+      return;
+    }
+    const parsed = dishBodySchema.partial().safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const updateData: Partial<typeof dishesTable.$inferInsert> = {};
+    if (parsed.data.name !== undefined) updateData.name = parsed.data.name;
+    if (parsed.data.description !== undefined)
+      updateData.description = parsed.data.description ?? null;
+    if (parsed.data.recipe !== undefined)
+      updateData.recipe = parsed.data.recipe ?? null;
+    if (parsed.data.prep !== undefined)
+      updateData.prep = parsed.data.prep ?? null;
+    if (parsed.data.service !== undefined)
+      updateData.service = parsed.data.service ?? null;
+    if (parsed.data.flatware !== undefined)
+      updateData.flatware = parsed.data.flatware ?? null;
+    if (parsed.data.ingredients !== undefined)
+      updateData.ingredients = parsed.data.ingredients;
+    if (parsed.data.supplies !== undefined)
+      updateData.supplies = parsed.data.supplies;
+    if (parsed.data.category !== undefined)
+      updateData.category = parsed.data.category ?? null;
+
+    const [dish] = await db
+      .update(dishesTable)
+      .set(updateData)
+      .where(eq(dishesTable.id, id))
+      .returning();
+    if (!dish) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    res.json(formatDish(dish));
+  },
+);
+
+// DELETE /api/dishes/:id — auth required
+router.delete(
+  "/:id",
+  requireAuth,
+  async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid id" });
+      return;
+    }
+    await db.delete(dishesTable).where(eq(dishesTable.id, id));
+    res.status(204).end();
+  },
+);
 
 export default router;

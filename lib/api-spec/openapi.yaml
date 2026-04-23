@@ -640,6 +640,30 @@ components:
         - lines
 
     # ── Dashboard ──
+    IngredientAggregate:
+      type: object
+      properties:
+        name:
+          type: string
+        unit:
+          type: string
+        totalQuantity:
+          type: number
+        totalCost:
+          type: number
+      required: [name, unit, totalQuantity, totalCost]
+
+    SupplyAggregate:
+      type: object
+      properties:
+        name:
+          type: string
+        totalQuantity:
+          type: number
+        totalCost:
+          type: number
+      required: [name, totalQuantity, totalCost]
+
     DashboardSummary:
       type: object
       properties:
@@ -661,6 +685,18 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/EventRequest"
+        ingredientTotals:
+          type: array
+          items:
+            $ref: "#/components/schemas/IngredientAggregate"
+        supplyTotals:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupplyAggregate"
+        flatwareRequired:
+          type: array
+          items:
+            type: string
       required:
         - totalEvents
         - newEvents
@@ -670,6 +706,9 @@ components:
         - totalEstimatedRevenue
         - totalAtCost
         - upcomingEvents
+        - ingredientTotals
+        - supplyTotals
+        - flatwareRequired
 
     ProcurementItem:
       type: object

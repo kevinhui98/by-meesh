@@ -435,6 +435,22 @@ export const GetDashboardSummaryResponse = zod.object({
       createdAt: zod.string(),
     }),
   ),
+  ingredientTotals: zod.array(
+    zod.object({
+      name: zod.string(),
+      unit: zod.string(),
+      totalQuantity: zod.number(),
+      totalCost: zod.number(),
+    }),
+  ),
+  supplyTotals: zod.array(
+    zod.object({
+      name: zod.string(),
+      totalQuantity: zod.number(),
+      totalCost: zod.number(),
+    }),
+  ),
+  flatwareRequired: zod.array(zod.string()),
 });
 
 /**

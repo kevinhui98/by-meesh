@@ -1,19 +1,23 @@
-import { Router } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { db } from "@workspace/db";
 import { eventMenusTable, dishesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { getAuth } from "@clerk/express";
 import { z } from "zod";
 
+// mergeParams lets us read :id from the parent router (/api/events/:id/menu)
 const router = Router({ mergeParams: true });
 
-const requireAuth = (req: any, res: any, next: any) => {
+type MenuParams = { id: string };
+
+function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const auth = getAuth(req);
   if (!auth?.userId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "Unauthorized" });
+    return;
   }
   next();
-};
+}
 
 const menuEntryInput = z.object({
   dishId: z.number().int(),
@@ -47,38 +51,54 @@ async function getMenuWithDishes(eventId: number) {
 }
 
 // GET /api/events/:id/menu
-router.get("/", requireAuth, async (req, res) => {
-  const eventId = parseInt(req.params.id);
-  const menu = await getMenuWithDishes(eventId);
-  res.json(menu);
-});
+router.get(
+  "/",
+  requireAuth,
+  async (req: Request<MenuParams>, res: Response): Promise<void> => {
+    const eventId = parseInt(req.params.id);
+    if (isNaN(eventId)) {
+      res.status(400).json({ error: "Invalid id" });
+      return;
+    }
+    const menu = await getMenuWithDishes(eventId);
+    res.json(menu);
+  },
+);
 
 // PUT /api/events/:id/menu
-router.put("/", requireAuth, async (req, res) => {
-  const eventId = parseInt(req.params.id);
-  const parsed = setMenuBodySchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.message });
-  }
+router.put(
+  "/",
+  requireAuth,
+  async (req: Request<MenuParams>, res: Response): Promise<void> => {
+    const eventId = parseInt(req.params.id);
+    if (isNaN(eventId)) {
+      res.status(400).json({ error: "Invalid id" });
+      return;
+    }
+    const parsed = setMenuBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
 
-  // Replace menu
-  await db
-    .delete(eventMenusTable)
-    .where(eq(eventMenusTable.eventId, eventId));
+    await db
+      .delete(eventMenusTable)
+      .where(eq(eventMenusTable.eventId, eventId));
 
-  if (parsed.data.entries.length > 0) {
-    await db.insert(eventMenusTable).values(
-      parsed.data.entries.map((e) => ({
-        eventId,
-        dishId: e.dishId,
-        course: e.course,
-        sortOrder: e.sortOrder,
-      })),
-    );
-  }
+    if (parsed.data.entries.length > 0) {
+      await db.insert(eventMenusTable).values(
+        parsed.data.entries.map((e) => ({
+          eventId,
+          dishId: e.dishId,
+          course: e.course,
+          sortOrder: e.sortOrder,
+        })),
+      );
+    }
 
-  const menu = await getMenuWithDishes(eventId);
-  res.json(menu);
-});
+    const menu = await getMenuWithDishes(eventId);
+    res.json(menu);
+  },
+);
 
 export default router;

@@ -183,6 +183,19 @@ export interface EventCost {
   lines: CostLine[];
 }
 
+export interface IngredientAggregate {
+  name: string;
+  unit: string;
+  totalQuantity: number;
+  totalCost: number;
+}
+
+export interface SupplyAggregate {
+  name: string;
+  totalQuantity: number;
+  totalCost: number;
+}
+
 export interface DashboardSummary {
   totalEvents: number;
   newEvents: number;
@@ -192,6 +205,9 @@ export interface DashboardSummary {
   totalEstimatedRevenue: number;
   totalAtCost: number;
   upcomingEvents: EventRequest[];
+  ingredientTotals: IngredientAggregate[];
+  supplyTotals: SupplyAggregate[];
+  flatwareRequired: string[];
 }
 
 export type ProcurementItemType =

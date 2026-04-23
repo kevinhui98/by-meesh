@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { db } from "@workspace/db";
 import { eventRequestsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
@@ -7,22 +7,23 @@ import { z } from "zod";
 
 const router = Router();
 
-const requireAuth = (req: any, res: any, next: any) => {
+function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const auth = getAuth(req);
   if (!auth?.userId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "Unauthorized" });
+    return;
   }
   next();
-};
+}
 
 const createEventSchema = z.object({
-  clientName: z.string(),
-  clientEmail: z.string(),
-  eventDate: z.string(),
-  guestCount: z.number().int(),
-  eventType: z.string(),
-  restrictions: z.string().nullish(),
-  notes: z.string().nullish(),
+  clientName: z.string().min(1),
+  clientEmail: z.string().email(),
+  eventDate: z.string().min(1),
+  guestCount: z.number().int().positive(),
+  eventType: z.string().min(1),
+  restrictions: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 const updateEventSchema = z.object({
@@ -30,37 +31,39 @@ const updateEventSchema = z.object({
   clientName: z.string().optional(),
   clientEmail: z.string().optional(),
   eventDate: z.string().optional(),
-  guestCount: z.number().int().optional(),
+  guestCount: z.number().int().positive().optional(),
   eventType: z.string().optional(),
-  restrictions: z.string().nullish(),
-  notes: z.string().nullish(),
+  restrictions: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 function formatEvent(e: typeof eventRequestsTable.$inferSelect) {
-  return {
-    ...e,
-    createdAt: e.createdAt.toISOString(),
-  };
+  return { ...e, createdAt: e.createdAt.toISOString() };
 }
 
-// GET /api/events
-router.get("/", requireAuth, async (req, res) => {
-  const status = req.query.status as string | undefined;
-  let query = db.select().from(eventRequestsTable);
-  if (status && ["new", "in_progress", "confirmed"].includes(status)) {
-    query = query.where(
-      eq(eventRequestsTable.status, status as "new" | "in_progress" | "confirmed"),
-    ) as typeof query;
-  }
-  const events = await query.orderBy(eventRequestsTable.createdAt);
-  res.json(events.map(formatEvent));
+// GET /api/events — auth required
+router.get("/", requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const status = req.query["status"] as string | undefined;
+  const validStatuses = ["new", "in_progress", "confirmed"] as const;
+
+  const rows = await db.select().from(eventRequestsTable);
+  const filtered =
+    status && (validStatuses as readonly string[]).includes(status)
+      ? rows.filter((e) => e.status === status)
+      : rows;
+
+  const sorted = filtered.sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+  );
+  res.json(sorted.map(formatEvent));
 });
 
-// POST /api/events - public (customer submission)
-router.post("/", async (req, res) => {
+// POST /api/events — public (customer booking)
+router.post("/", async (req: Request, res: Response): Promise<void> => {
   const parsed = createEventSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.message });
+    res.status(400).json({ error: parsed.error.message });
+    return;
   }
   const [event] = await db
     .insert(eventRequestsTable)
@@ -78,55 +81,86 @@ router.post("/", async (req, res) => {
   res.status(201).json(formatEvent(event));
 });
 
-// GET /api/events/:id
-router.get("/:id", requireAuth, async (req, res) => {
-  const id = parseInt(req.params.id);
-  const [event] = await db
-    .select()
-    .from(eventRequestsTable)
-    .where(eq(eventRequestsTable.id, id));
-  if (!event) return res.status(404).json({ error: "Not found" });
-  res.json(formatEvent(event));
-});
+// GET /api/events/:id — auth required
+router.get(
+  "/:id",
+  requireAuth,
+  async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid id" });
+      return;
+    }
+    const [event] = await db
+      .select()
+      .from(eventRequestsTable)
+      .where(eq(eventRequestsTable.id, id));
+    if (!event) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    res.json(formatEvent(event));
+  },
+);
 
-// PATCH /api/events/:id
-router.patch("/:id", requireAuth, async (req, res) => {
-  const id = parseInt(req.params.id);
-  const parsed = updateEventSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.message });
-  }
-  const updateData: Partial<typeof eventRequestsTable.$inferInsert> = {};
-  if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
-  if (parsed.data.clientName !== undefined)
-    updateData.clientName = parsed.data.clientName;
-  if (parsed.data.clientEmail !== undefined)
-    updateData.clientEmail = parsed.data.clientEmail;
-  if (parsed.data.eventDate !== undefined)
-    updateData.eventDate = parsed.data.eventDate;
-  if (parsed.data.guestCount !== undefined)
-    updateData.guestCount = parsed.data.guestCount;
-  if (parsed.data.eventType !== undefined)
-    updateData.eventType = parsed.data.eventType;
-  if (parsed.data.restrictions !== undefined)
-    updateData.restrictions = parsed.data.restrictions ?? null;
-  if (parsed.data.notes !== undefined)
-    updateData.notes = parsed.data.notes ?? null;
+// PATCH /api/events/:id — auth required
+router.patch(
+  "/:id",
+  requireAuth,
+  async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid id" });
+      return;
+    }
+    const parsed = updateEventSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const updateData: Partial<typeof eventRequestsTable.$inferInsert> = {};
+    if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
+    if (parsed.data.clientName !== undefined)
+      updateData.clientName = parsed.data.clientName;
+    if (parsed.data.clientEmail !== undefined)
+      updateData.clientEmail = parsed.data.clientEmail;
+    if (parsed.data.eventDate !== undefined)
+      updateData.eventDate = parsed.data.eventDate;
+    if (parsed.data.guestCount !== undefined)
+      updateData.guestCount = parsed.data.guestCount;
+    if (parsed.data.eventType !== undefined)
+      updateData.eventType = parsed.data.eventType;
+    if (parsed.data.restrictions !== undefined)
+      updateData.restrictions = parsed.data.restrictions ?? null;
+    if (parsed.data.notes !== undefined)
+      updateData.notes = parsed.data.notes ?? null;
 
-  const [event] = await db
-    .update(eventRequestsTable)
-    .set(updateData)
-    .where(eq(eventRequestsTable.id, id))
-    .returning();
-  if (!event) return res.status(404).json({ error: "Not found" });
-  res.json(formatEvent(event));
-});
+    const [event] = await db
+      .update(eventRequestsTable)
+      .set(updateData)
+      .where(eq(eventRequestsTable.id, id))
+      .returning();
+    if (!event) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    res.json(formatEvent(event));
+  },
+);
 
-// DELETE /api/events/:id
-router.delete("/:id", requireAuth, async (req, res) => {
-  const id = parseInt(req.params.id);
-  await db.delete(eventRequestsTable).where(eq(eventRequestsTable.id, id));
-  res.status(204).end();
-});
+// DELETE /api/events/:id — auth required
+router.delete(
+  "/:id",
+  requireAuth,
+  async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid id" });
+      return;
+    }
+    await db.delete(eventRequestsTable).where(eq(eventRequestsTable.id, id));
+    res.status(204).end();
+  },
+);
 
 export default router;
