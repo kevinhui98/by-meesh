@@ -130,7 +130,7 @@ function HomeRedirect() {
   );
 }
 
-function ProtectedRoute({ component: Component }: { component: React.ComponentType<any> }) {
+function ProtectedRoute({ component: Component }: { component: React.ComponentType<Record<string, never>> }) {
   return (
     <>
       <Show when="signed-in">

@@ -8,6 +8,9 @@ import {
   getGetEventQueryKey,
   getGetEventCostQueryKey,
   getGetEventMenuQueryKey,
+  type EventRequest,
+  type MenuEntry,
+  type EventCost,
 } from "@workspace/api-client-react";
 import { ArrowLeft, DollarSign, FileText, Receipt, ShoppingCart, ClipboardList } from "lucide-react";
 
@@ -17,9 +20,9 @@ function ProposalModal({
   cost,
   onClose,
 }: {
-  event: any;
-  menu: any[];
-  cost: any;
+  event: EventRequest;
+  menu: MenuEntry[];
+  cost: EventCost | undefined;
   onClose: () => void;
 }) {
   return (
@@ -39,13 +42,13 @@ function ProposalModal({
         </div>
         <h2 className="font-semibold text-foreground mb-3">Proposed Menu</h2>
         {["Appetizer", "Main", "Side", "Dessert", "Beverage"].map((course) => {
-          const dishes = menu.filter((m: any) => m.course === course);
+          const dishes = menu.filter((m) => m.course === course);
           if (!dishes.length) return null;
           return (
             <div key={course} className="mb-4">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-primary mb-2">{course}s</h3>
               <ul className="space-y-1">
-                {dishes.map((d: any) => (
+                {dishes.map((d) => (
                   <li key={d.id} className="text-sm text-foreground">{d.dish.name}</li>
                 ))}
               </ul>
@@ -65,7 +68,7 @@ function ProposalModal({
   );
 }
 
-function ProcurementModal({ cost, onClose }: { cost: any; onClose: () => void }) {
+function ProcurementModal({ cost, onClose }: { cost: EventCost; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-background max-w-xl w-full max-h-[80vh] overflow-y-auto rounded-2xl p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -79,7 +82,7 @@ function ProcurementModal({ cost, onClose }: { cost: any; onClose: () => void })
             </tr>
           </thead>
           <tbody>
-            {cost?.lines?.map((line: any, i: number) => (
+            {cost.lines.map((line, i) => (
               <tr key={i} className="border-b border-border/50">
                 <td className="py-2">
                   <div>{line.name}</div>
@@ -93,7 +96,7 @@ function ProcurementModal({ cost, onClose }: { cost: any; onClose: () => void })
           <tfoot>
             <tr>
               <td colSpan={2} className="pt-3 font-semibold">Total at cost</td>
-              <td className="pt-3 text-right font-bold">${cost?.atCost?.toFixed(2)}</td>
+              <td className="pt-3 text-right font-bold">${cost.atCost.toFixed(2)}</td>
             </tr>
           </tfoot>
         </table>
@@ -271,12 +274,12 @@ export default function CostSummary() {
             <h1 className="text-xl font-bold text-foreground mb-2">Run of Show</h1>
             <p className="text-sm text-muted-foreground mb-6">{event.clientName} · {event.eventDate}</p>
             {["Appetizer", "Main", "Side", "Dessert", "Beverage"].map((course) => {
-              const dishes = menu.filter((m: any) => m.course === course);
+              const dishes = menu.filter((m) => m.course === course);
               if (!dishes.length) return null;
               return (
                 <div key={course} className="mb-6">
                   <h2 className="text-xs font-bold uppercase tracking-wider text-primary mb-3">{course}s</h2>
-                  {dishes.map((d: any) => (
+                  {dishes.map((d) => (
                     <div key={d.id} className="mb-4 p-3 bg-muted rounded-xl">
                       <div className="font-medium text-foreground text-sm mb-1">{d.dish.name}</div>
                       {d.dish.prep && <div className="text-xs text-muted-foreground"><span className="font-medium">Prep: </span>{d.dish.prep}</div>}

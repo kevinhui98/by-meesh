@@ -5,6 +5,7 @@ import {
   useGetDishes,
   useDeleteDish,
   getGetDishesQueryKey,
+  type Dish,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -48,7 +49,7 @@ export default function DishLibrary() {
     }
   };
 
-  const getDishCost = (dish: any) => {
+  const getDishCost = (dish: Dish) => {
     let cost = 0;
     for (const ing of dish.ingredients ?? []) cost += (ing.unitCost ?? 0);
     for (const sup of dish.supplies ?? []) cost += (sup.unitCost ?? 0);

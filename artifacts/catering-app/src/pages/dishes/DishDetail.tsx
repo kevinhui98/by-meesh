@@ -100,8 +100,8 @@ export default function DishDetail() {
         service: dish.service ?? "",
         flatware: dish.flatware ?? "",
         category: dish.category ?? "",
-        ingredients: (dish.ingredients ?? []) as any,
-        supplies: (dish.supplies ?? []) as any,
+        ingredients: dish.ingredients ?? [],
+        supplies: dish.supplies ?? [],
       });
     }
   }, [dish, isNew, reset]);
