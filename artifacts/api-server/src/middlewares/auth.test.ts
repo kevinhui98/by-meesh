@@ -24,17 +24,36 @@ const makeNext = () => {
 };
 
 describe("requireOwner middleware (via makeRequireOwner)", () => {
-  before(() => { delete process.env.OWNER_USER_ID; });
-  after(() => { delete process.env.OWNER_USER_ID; });
-
-  it("returns 503 when OWNER_USER_ID is not configured (fail closed)", () => {
+  before(() => {
     delete process.env.OWNER_USER_ID;
+    delete process.env.NODE_ENV;
+  });
+  after(() => {
+    delete process.env.OWNER_USER_ID;
+    delete process.env.NODE_ENV;
+  });
+
+  it("returns 503 in production when OWNER_USER_ID is not configured (fail closed)", () => {
+    delete process.env.OWNER_USER_ID;
+    process.env.NODE_ENV = "production";
     const mw = makeRequireOwner(() => "user_any_123");
     const res = makeRes();
     const next = makeNext();
     mw({} as Request, res, next);
     assert.equal(res.statusCode, 503);
     assert.equal(next.called, false);
+    delete process.env.NODE_ENV;
+  });
+
+  it("allows any authenticated user in development when OWNER_USER_ID is unset", () => {
+    delete process.env.OWNER_USER_ID;
+    process.env.NODE_ENV = "development";
+    const mw = makeRequireOwner(() => "user_any_123");
+    const res = makeRes();
+    const next = makeNext();
+    mw({} as Request, res, next);
+    assert.equal(next.called, true);
+    delete process.env.NODE_ENV;
   });
 
   it("returns 401 when no userId (unauthenticated)", () => {

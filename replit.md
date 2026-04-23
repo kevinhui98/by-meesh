@@ -23,9 +23,11 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 | `DATABASE_URL` | Replit Secrets | PostgreSQL connection string (auto-set by Replit DB) |
 | `CLERK_SECRET_KEY` | Replit Secrets | Clerk backend secret (from Clerk dashboard) |
 | `VITE_CLERK_PUBLISHABLE_KEY` | Replit Secrets | Clerk frontend publishable key |
-| `OWNER_USER_ID` | Replit Secrets | **Required.** Michelle's Clerk user ID (e.g. `user_abc123`). All owner-dashboard API endpoints return 503 until this is set. Find your user ID in the Clerk dashboard → Users. |
+| `OWNER_USER_ID` | Replit Secrets | **Required for production.** Michelle's Clerk user ID (e.g. `user_abc123`). In development any authenticated user may access owner routes; in production all owner endpoints return 503 until this is set. Find your ID in the Clerk dashboard → Users. |
 
-> The app is single-owner. Any authenticated Clerk user whose ID does not match `OWNER_USER_ID` receives a 403 Forbidden. If `OWNER_USER_ID` is unset, all private endpoints fail with 503 (fail-closed security default).
+> **Authorization behavior:**
+> - **Development** (`NODE_ENV=development`, default): any signed-in Clerk user can access owner routes. Set `OWNER_USER_ID` to restrict to a specific account.
+> - **Production**: if `OWNER_USER_ID` is not set, all private endpoints return 503. If set, only the matching Clerk user ID is allowed; all others get 403.
 
 ## Key Commands
 

@@ -20,21 +20,26 @@ export function requireOwner(req: Request, res: Response, next: NextFunction): v
 export function makeRequireOwner(getUserId: (req: Request) => string | null) {
   return function (req: Request, res: Response, next: NextFunction): void {
     const ownerId = process.env.OWNER_USER_ID;
-    if (!ownerId) {
+    const isProd = process.env.NODE_ENV === "production";
+
+    if (!ownerId && isProd) {
       res
         .status(503)
         .json({ error: "Server misconfiguration: OWNER_USER_ID is not set" });
       return;
     }
+
     const userId = getUserId(req);
     if (!userId) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
-    if (userId !== ownerId) {
+
+    if (ownerId && userId !== ownerId) {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
+
     next();
   };
 }
