@@ -47,7 +47,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-6 py-24 text-center relative">
           <div className="inline-flex items-center gap-2 bg-accent/60 text-accent-foreground rounded-full px-4 py-1.5 text-sm font-medium mb-8">
             <Star className="w-3.5 h-3.5 fill-primary text-primary" />
-            Private catering in [Your City]
+            Private catering in New York City
           </div>
           <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-6 leading-tight tracking-tight">
             Exceptional food,
