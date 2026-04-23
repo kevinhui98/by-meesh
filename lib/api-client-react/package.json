@@ -10,6 +10,7 @@
     "@tanstack/react-query": "catalog:"
   },
   "peerDependencies": {
+    "firebase": ">=10",
     "react": ">=18"
   }
 }

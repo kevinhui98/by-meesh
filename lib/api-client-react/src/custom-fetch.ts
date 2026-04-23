@@ -8,6 +8,10 @@ export type BodyType<T> = T;
 
 export type AuthTokenGetter = () => Promise<string | null> | string | null;
 
+export interface BackendHandler {
+  handle(method: string, url: string, body: unknown): Promise<unknown>;
+}
+
 const NO_BODY_STATUS = new Set([204, 205, 304]);
 const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 
@@ -17,6 +21,7 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 
 let _baseUrl: string | null = null;
 let _authTokenGetter: AuthTokenGetter | null = null;
+let _backend: BackendHandler | null = null;
 
 /**
  * Set a base URL that is prepended to every relative request URL
@@ -42,6 +47,14 @@ export function setBaseUrl(url: string | null): void {
  */
 export function setAuthTokenGetter(getter: AuthTokenGetter | null): void {
   _authTokenGetter = getter;
+}
+
+/**
+ * Register a backend handler that intercepts requests to `/api/*` and
+ * resolves them in-process instead of via HTTP. Pass `null` to clear.
+ */
+export function setBackend(backend: BackendHandler | null): void {
+  _backend = backend;
 }
 
 function isRequest(input: RequestInfo | URL): input is Request {
@@ -326,7 +339,6 @@ export async function customFetch<T = unknown>(
   input: RequestInfo | URL,
   options: CustomFetchOptions = {},
 ): Promise<T> {
-  input = applyBaseUrl(input);
   const { responseType = "auto", headers: headersInit, ...init } = options;
 
   const method = resolveMethod(input, init.method);
@@ -334,6 +346,19 @@ export async function customFetch<T = unknown>(
   if (init.body != null && (method === "GET" || method === "HEAD")) {
     throw new TypeError(`customFetch: ${method} requests cannot have a body.`);
   }
+
+  if (_backend) {
+    const rawUrl = resolveUrl(input);
+    if (rawUrl.startsWith("/api/")) {
+      const parsedBody =
+        typeof init.body === "string" && init.body.length > 0
+          ? JSON.parse(init.body)
+          : init.body ?? null;
+      return (await _backend.handle(method, rawUrl, parsedBody)) as T;
+    }
+  }
+
+  input = applyBaseUrl(input);
 
   const headers = mergeHeaders(isRequest(input) ? input.headers : undefined, headersInit);
 

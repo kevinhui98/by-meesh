@@ -1,18 +1,8 @@
-Seed · TS
-Copy
-
 import { db } from "./index";
 import { dishesTable, eventRequestsTable } from "./schema";
 
 async function seed() {
   console.log("Seeding database...");
-
-  const existing = await db.select({ id: dishesTable.id }).from(dishesTable);
-  if (existing.length > 0) {
-    console.log(`Database already has ${existing.length} dishes — skipping seed to avoid duplicates.`);
-    console.log("To re-seed, clear the tables first.");
-    process.exit(0);
-  }
 
   // Seed dishes
   const dishes = [
