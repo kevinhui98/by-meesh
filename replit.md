@@ -24,6 +24,9 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 | `CLERK_SECRET_KEY` | Replit Secrets | Clerk backend secret (from Clerk dashboard) |
 | `VITE_CLERK_PUBLISHABLE_KEY` | Replit Secrets | Clerk frontend publishable key |
 | `OWNER_USER_ID` | Replit Secrets | **Required for production.** Michelle's Clerk user ID (e.g. `user_abc123`). In development any authenticated user may access owner routes; in production all owner endpoints return 503 until this is set. Find your ID in the Clerk dashboard → Users. |
+| `ALLOWED_ORIGINS` | Replit Secrets | **Required for production.** Comma-separated list of allowed CORS origins (e.g. `https://bymeesh.replit.app`). In development all origins are allowed. In production, omitting this blocks all cross-origin requests. |
+| `PORT` | Auto-set by Replit | Port the API server listens on. Replit sets this automatically; set manually for local dev (e.g. `PORT=8080`). |
+| `BASE_URL` / `BASE_PATH` | Vite build env | Set automatically by Replit's artifact routing. For local dev outside Replit, set `VITE_BASE_URL=/` in a `.env` file in `artifacts/catering-app/`. |
 
 > **Authorization behavior:**
 > - **Development** (`NODE_ENV=development`, default): any signed-in Clerk user can access owner routes. Set `OWNER_USER_ID` to restrict to a specific account.

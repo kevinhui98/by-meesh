@@ -33,7 +33,18 @@ app.use(
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
-app.use(cors({ credentials: true, origin: true }));
+const corsOrigin: cors.CorsOptions["origin"] = (() => {
+  const allowedOrigins = process.env.ALLOWED_ORIGINS;
+  if (allowedOrigins) {
+    return allowedOrigins.split(",").map((o) => o.trim());
+  }
+  if (process.env.NODE_ENV === "production") {
+    logger.warn("ALLOWED_ORIGINS is not set in production — blocking all CORS requests");
+    return false;
+  }
+  return true;
+})();
+app.use(cors({ credentials: true, origin: corsOrigin }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
