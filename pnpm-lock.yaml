@@ -416,6 +416,10 @@ importers:
         version: 0.31.10
 
   scripts:
+    dependencies:
+      firebase:
+        specifier: ^12.12.1
+        version: 12.12.1
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

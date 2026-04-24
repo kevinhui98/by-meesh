@@ -398,6 +398,9 @@ components:
         category:
           type: ["string", "null"]
           description: e.g. appetizer, main, dessert, side
+        targetGp:
+          type: ["number", "null"]
+          description: Target gross profit percentage (0–99) used to calculate suggested sell price
         createdAt:
           type: string
       required:
@@ -432,6 +435,9 @@ components:
             $ref: "#/components/schemas/Supply"
         category:
           type: ["string", "null"]
+        targetGp:
+          type: ["number", "null"]
+          description: Target gross profit percentage (0–99)
       required:
         - name
         - ingredients
@@ -462,6 +468,9 @@ components:
             $ref: "#/components/schemas/Supply"
         category:
           type: ["string", "null"]
+        targetGp:
+          type: ["number", "null"]
+          description: Target gross profit percentage (0–99)
 
     # ── Event Request ──
     EventRequest:
@@ -558,6 +567,11 @@ components:
           description: e.g. appetizer, main, dessert, side, beverage
         sortOrder:
           type: integer
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Number of portions/batches of this dish
         dish:
           $ref: "#/components/schemas/Dish"
       required:
@@ -566,6 +580,7 @@ components:
         - dishId
         - course
         - sortOrder
+        - quantity
         - dish
 
     MenuEntryInput:
@@ -577,10 +592,16 @@ components:
           type: string
         sortOrder:
           type: integer
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Number of portions/batches of this dish
       required:
         - dishId
         - course
         - sortOrder
+        - quantity
 
     SetEventMenuBody:
       type: object
@@ -607,12 +628,35 @@ components:
         type:
           type: string
           enum: [ingredient, supply]
+        dishName:
+          type: string
+          description: Name of the dish this line belongs to
       required:
         - name
         - quantity
         - unitCost
         - totalCost
         - type
+        - dishName
+
+    DishCostGroup:
+      type: object
+      properties:
+        dishId:
+          type: integer
+        dishName:
+          type: string
+        quantity:
+          type: integer
+          description: Number of portions/batches
+        atCost:
+          type: number
+          description: Total ingredient + supply cost for this dish × quantity
+      required:
+        - dishId
+        - dishName
+        - quantity
+        - atCost
 
     EventCost:
       type: object
@@ -631,6 +675,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CostLine"
+        dishGroups:
+          type: array
+          items:
+            $ref: "#/components/schemas/DishCostGroup"
+          description: Per-dish cost summary
       required:
         - eventId
         - guestCount
@@ -638,6 +687,7 @@ components:
         - margin
         - totalPrice
         - lines
+        - dishGroups
 
     # ── Dashboard ──
     IngredientAggregate:

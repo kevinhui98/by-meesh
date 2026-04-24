@@ -15,6 +15,7 @@ import type {
   CreateEventBody,
   DashboardSummary,
   Dish,
+  DishCostGroup,
   EventCost,
   EventRequest,
   EventRequestStatus,
@@ -124,6 +125,7 @@ async function handleDishes(
         service: payload.service ?? null,
         flatware: payload.flatware ?? null,
         category: payload.category ?? null,
+        targetGp: payload.targetGp ?? null,
         ingredients: payload.ingredients ?? [],
         supplies: payload.supplies ?? [],
         createdAt: nowIso(),
@@ -155,6 +157,7 @@ async function handleDishes(
       ...("service" in patch ? { service: patch.service ?? null } : {}),
       ...("flatware" in patch ? { flatware: patch.flatware ?? null } : {}),
       ...("category" in patch ? { category: patch.category ?? null } : {}),
+      ...("targetGp" in patch ? { targetGp: patch.targetGp ?? null } : {}),
       ...(patch.ingredients ? { ingredients: patch.ingredients } : {}),
       ...(patch.supplies ? { supplies: patch.supplies } : {}),
     };
@@ -242,15 +245,27 @@ async function handleEventItem(
   throw apiError(405, `Method ${method} not allowed on /api/events/${id}`);
 }
 
+interface StoredMenuEntry {
+  dishId: number;
+  course: string;
+  sortOrder: number;
+  quantity: number;
+}
+
 interface StoredMenu {
   eventId: number;
-  entries: Array<{ dishId: number; course: string; sortOrder: number }>;
+  entries: StoredMenuEntry[];
 }
 
 async function getStoredMenu(db: Firestore, eventId: number): Promise<StoredMenu> {
   const snap = await getDoc(doc(db, MENUS, String(eventId)));
   if (!snap.exists()) return { eventId, entries: [] };
-  return snap.data() as StoredMenu;
+  const data = snap.data() as StoredMenu;
+  // Backfill quantity for legacy entries that may not have it
+  return {
+    ...data,
+    entries: (data.entries ?? []).map((e) => ({ ...e, quantity: e.quantity ?? 1 })),
+  };
 }
 
 async function hydrateMenu(db: Firestore, stored: StoredMenu): Promise<MenuEntry[]> {
@@ -266,6 +281,7 @@ async function hydrateMenu(db: Firestore, stored: StoredMenu): Promise<MenuEntry
       dishId: entry.dishId,
       course: entry.course,
       sortOrder: entry.sortOrder,
+      quantity: entry.quantity ?? 1,
       dish,
     });
   }
@@ -290,6 +306,7 @@ async function handleEventMenu(
         dishId: e.dishId,
         course: e.course,
         sortOrder: e.sortOrder,
+        quantity: e.quantity ?? 1,
       })),
     };
     await setDoc(doc(db, MENUS, String(eventId)), stored);
@@ -305,33 +322,48 @@ function computeCost(
   margin: number,
 ): EventCost {
   const lines: CostLine[] = [];
+  const dishGroups: DishCostGroup[] = [];
   let atCost = 0;
 
   for (const entry of entries) {
+    const dishQuantity = entry.quantity ?? 1;
+    let dishAtCost = 0;
+
     for (const ing of entry.dish.ingredients) {
-      const qty = Number(ing.quantity) * guestCount;
+      const qty = Number(ing.quantity) * guestCount * dishQuantity;
       const totalCost = qty * ing.unitCost;
       atCost += totalCost;
+      dishAtCost += totalCost;
       lines.push({
         name: ing.name,
         quantity: String(qty),
         unitCost: ing.unitCost,
         totalCost,
         type: "ingredient",
+        dishName: entry.dish.name,
       });
     }
     for (const sup of entry.dish.supplies) {
-      const qty = Number(sup.quantity) * guestCount;
+      const qty = Number(sup.quantity) * guestCount * dishQuantity;
       const totalCost = qty * sup.unitCost;
       atCost += totalCost;
+      dishAtCost += totalCost;
       lines.push({
         name: sup.name,
         quantity: String(qty),
         unitCost: sup.unitCost,
         totalCost,
         type: "supply",
+        dishName: entry.dish.name,
       });
     }
+
+    dishGroups.push({
+      dishId: entry.dishId,
+      dishName: entry.dish.name,
+      quantity: dishQuantity,
+      atCost: dishAtCost,
+    });
   }
 
   return {
@@ -341,6 +373,7 @@ function computeCost(
     margin,
     totalPrice: atCost * margin,
     lines,
+    dishGroups,
   };
 }
 
@@ -394,9 +427,10 @@ async function handleDashboardSummary(
     for (const entry of menu.entries) {
       const dish = dishById.get(entry.dishId);
       if (!dish) continue;
+      const dishQuantity = (entry as StoredMenuEntry).quantity ?? 1;
 
       for (const ing of dish.ingredients) {
-        const qty = Number(ing.quantity) * guests;
+        const qty = Number(ing.quantity) * guests * dishQuantity;
         const cost = qty * ing.unitCost;
         totalAtCost += cost;
         const key = `${ing.name}::${ing.unit}`;
@@ -414,7 +448,7 @@ async function handleDashboardSummary(
         }
       }
       for (const sup of dish.supplies) {
-        const qty = Number(sup.quantity) * guests;
+        const qty = Number(sup.quantity) * guests * dishQuantity;
         const cost = qty * sup.unitCost;
         totalAtCost += cost;
         const prev = supplyTotals.get(sup.name);
@@ -496,9 +530,10 @@ async function handleProcurement(
     for (const entry of menu.entries) {
       const dish = dishById.get(entry.dishId);
       if (!dish) continue;
+      const dishQuantity = (entry as StoredMenuEntry).quantity ?? 1;
 
       for (const ing of dish.ingredients) {
-        const qty = Number(ing.quantity) * event.guestCount;
+        const qty = Number(ing.quantity) * event.guestCount * dishQuantity;
         const cost = qty * ing.unitCost;
         const key = `${ing.name}::${ing.unit}`;
         const prev = ingredientAgg.get(key);
@@ -524,7 +559,7 @@ async function handleProcurement(
         }
       }
       for (const sup of dish.supplies) {
-        const qty = Number(sup.quantity) * event.guestCount;
+        const qty = Number(sup.quantity) * event.guestCount * dishQuantity;
         const cost = qty * sup.unitCost;
         const key = sup.name;
         const prev = supplyAgg.get(key);

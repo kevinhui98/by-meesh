@@ -284,6 +284,47 @@ async function seed() {
         { name: "Tongs (2)", quantity: "2", unitCost: 0.00 },
       ],
     },
+
+    // ─── BEVERAGES ────────────────────────────────────────────────────────────
+    {
+      name: "Tea — Grand Tea Imports",
+      description: "Premium loose-leaf teas from Grand Tea Imports served hot, family-style for the table.",
+      recipe: "Steep selected teas per package instructions. Serve in teapots.",
+      prep: "Boil water and steep teas just before service.",
+      service: "Serve in teapots on the table.",
+      flatware: "Teacups, teaspoons.",
+      category: "beverage",
+      ingredients: [],
+      supplies: [
+        { name: "Grand Tea Imports tea selection", quantity: "1", unitCost: 0.00 },
+        { name: "Teapots", quantity: "2", unitCost: 0.00 },
+        { name: "Teacups (1 pp)", quantity: "20", unitCost: 0.00 },
+      ],
+    },
+
+    // ─── SIDES ────────────────────────────────────────────────────────────────
+    {
+      name: "Accoutrements",
+      description: "A family-style spread of condiments and garnishes — chili oil, scallions, cucumbers, pickled mustard greens, ginger, and crispy shallots — to accompany the jook.",
+      recipe: "Prepare all condiments and arrange in small sauce dishes for the table.",
+      prep: "Prep all AM of event. Slice cucumbers, mince scallions, prep ginger matchsticks. Fill sauce dishes.",
+      service: "Arrange in 4–5 sauce dishes family-style on each table.",
+      flatware: "Demi-tasse spoons (4).",
+      category: "side",
+      ingredients: [
+        { name: "Chili oil (Jenny's recipe / store)", quantity: "1", unit: "cup", unitCost: 5.00 },
+        { name: "Scallions", quantity: "2", unit: "bunches", unitCost: 3.00 },
+        { name: "Kirby cucumbers (diced)", quantity: "3", unit: "each", unitCost: 3.00 },
+        { name: "Pickled mustard greens", quantity: "0.5", unit: "cup", unitCost: 2.50 },
+        { name: "Fresh ginger (matchsticks)", quantity: "3", unit: "oz", unitCost: 1.50 },
+        { name: "Crispy shallots", quantity: "1", unit: "cup", unitCost: 4.00 },
+      ],
+      supplies: [
+        { name: "Sauce dishes / demi-tasse bowls (5 sets)", quantity: "5", unitCost: 0.00 },
+        { name: "Demi-tasse spoons (4)", quantity: "4", unitCost: 0.00 },
+        { name: "Tongs (2)", quantity: "2", unitCost: 0.00 },
+      ],
+    },
   ];
 
   for (const dish of dishes) {

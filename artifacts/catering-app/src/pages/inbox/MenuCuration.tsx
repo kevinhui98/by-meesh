@@ -31,7 +31,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeft, GripVertical, Plus, X, Save, ChefHat } from "lucide-react";
+import { ArrowLeft, GripVertical, Plus, X, Save, ChefHat, Minus } from "lucide-react";
 
 const COURSES = ["Appetizer", "Main", "Side", "Dessert", "Beverage"] as const;
 type Course = (typeof COURSES)[number];
@@ -43,9 +43,18 @@ interface MenuDish {
   category?: string | null;
   course: Course;
   sortOrder: number;
+  quantity: number;
 }
 
-function DishCard({ dish, onRemove }: { dish: MenuDish; onRemove: () => void }) {
+function DishCard({
+  dish,
+  onRemove,
+  onQuantityChange,
+}: {
+  dish: MenuDish;
+  onRemove: () => void;
+  onQuantityChange: (qty: number) => void;
+}) {
   const {
     attributes,
     listeners,
@@ -80,9 +89,26 @@ function DishCard({ dish, onRemove }: { dish: MenuDish; onRemove: () => void }) 
           <div className="text-xs text-muted-foreground capitalize">{dish.category}</div>
         )}
       </div>
+      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={() => onQuantityChange(Math.max(1, dish.quantity - 1))}
+          className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <Minus className="w-3 h-3" />
+        </button>
+        <span className="text-sm font-medium text-foreground w-5 text-center">
+          {dish.quantity}
+        </span>
+        <button
+          onClick={() => onQuantityChange(dish.quantity + 1)}
+          className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <Plus className="w-3 h-3" />
+        </button>
+      </div>
       <button
         onClick={onRemove}
-        className="text-muted-foreground/40 hover:text-destructive transition-colors shrink-0"
+        className="text-muted-foreground/40 hover:text-destructive transition-colors shrink-0 ml-1"
       >
         <X className="w-3.5 h-3.5" />
       </button>
@@ -164,6 +190,7 @@ export default function MenuCuration() {
           category: e.dish.category,
           course: (e.course as Course) || "Main",
           sortOrder: e.sortOrder,
+          quantity: e.quantity ?? 1,
         }))
       );
     }
@@ -183,12 +210,19 @@ export default function MenuCuration() {
       category: dish.category,
       course,
       sortOrder: menuDishes.filter((m) => m.course === course).length,
+      quantity: 1,
     };
     setMenuDishes((prev) => [...prev, newEntry]);
   };
 
   const removeDish = (id: string) => {
     setMenuDishes((prev) => prev.filter((d) => d.id !== id));
+  };
+
+  const updateQuantity = (id: string, qty: number) => {
+    setMenuDishes((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, quantity: Math.max(1, qty) } : d))
+    );
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -260,6 +294,7 @@ export default function MenuCuration() {
             dishId: d.dishId,
             course: d.course,
             sortOrder: i,
+            quantity: d.quantity,
           })),
         },
       });
@@ -404,6 +439,7 @@ export default function MenuCuration() {
                             key={dish.id}
                             dish={dish}
                             onRemove={() => removeDish(dish.id)}
+                            onQuantityChange={(qty) => updateQuantity(dish.id, qty)}
                           />
                         ))}
                       </CourseDropZone>

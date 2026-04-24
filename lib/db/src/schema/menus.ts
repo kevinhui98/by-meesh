@@ -14,6 +14,7 @@ export const eventMenusTable = pgTable("event_menus", {
     .references(() => dishesTable.id, { onDelete: "cascade" }),
   course: text("course").notNull(),
   sortOrder: integer("sort_order").notNull().default(0),
+  quantity: integer("quantity").notNull().default(1),
 });
 
 export const insertEventMenuSchema = createInsertSchema(eventMenusTable).omit({

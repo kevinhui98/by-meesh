@@ -49,7 +49,12 @@ function ProposalModal({
               <h3 className="text-xs font-semibold uppercase tracking-wider text-primary mb-2">{course}s</h3>
               <ul className="space-y-1">
                 {dishes.map((d) => (
-                  <li key={d.id} className="text-sm text-foreground">{d.dish.name}</li>
+                  <li key={d.id} className="text-sm text-foreground">
+                    {d.dish.name}
+                    {(d.quantity ?? 1) > 1 && (
+                      <span className="text-muted-foreground ml-1">×{d.quantity}</span>
+                    )}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -189,25 +194,40 @@ export default function CostSummary() {
           </div>
         )}
 
-        {/* Line items */}
-        {cost && cost.lines.length > 0 && (
+        {/* Per-dish cost breakdown */}
+        {cost && cost.dishGroups.length > 0 && (
           <div className="bg-card border border-card-border rounded-2xl overflow-hidden mb-6">
             <div className="px-4 py-3 border-b border-border">
               <h2 className="text-sm font-semibold text-foreground">Cost Breakdown</h2>
             </div>
-            <div className="divide-y divide-border max-h-72 overflow-y-auto">
-              {cost.lines.map((line, i) => (
-                <div key={i} className="px-4 py-3 flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium text-foreground">{line.name}</div>
-                    <div className="text-xs text-muted-foreground capitalize">{line.type} · {line.quantity}</div>
+            <div className="divide-y divide-border max-h-96 overflow-y-auto">
+              {cost.dishGroups.map((group, gIdx) => {
+                const groupLines = cost.lines.filter((l) => l.dishName === group.dishName);
+                return (
+                  <div key={`${group.dishId}-${gIdx}`}>
+                    <div className="px-4 py-2.5 flex items-center justify-between bg-muted/40">
+                      <div className="text-sm font-semibold text-foreground">
+                        {group.dishName}
+                        {group.quantity > 1 && (
+                          <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                            ×{group.quantity}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm font-semibold text-foreground">${group.atCost.toFixed(2)}</div>
+                    </div>
+                    {groupLines.map((line, i) => (
+                      <div key={i} className="px-6 py-2 flex items-center justify-between">
+                        <div>
+                          <div className="text-xs text-foreground">{line.name}</div>
+                          <div className="text-xs text-muted-foreground capitalize">{line.type} · {line.quantity}</div>
+                        </div>
+                        <div className="text-xs text-muted-foreground">${line.totalCost.toFixed(2)}</div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium text-foreground">${line.totalCost.toFixed(2)}</div>
-                    <div className="text-xs text-muted-foreground">${line.unitCost.toFixed(2)}/unit</div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
