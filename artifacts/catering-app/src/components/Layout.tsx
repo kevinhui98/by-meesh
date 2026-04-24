@@ -29,12 +29,9 @@ export default function Layout({ children }: { children: ReactNode }) {
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:flex`}
       >
         <div className="px-6 py-6 border-b border-sidebar-border">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <ChefHat className="w-7 h-7 text-sidebar-primary" />
-            <div>
-              <div className="font-semibold text-sm tracking-wide text-sidebar-foreground">By Meesh</div>
-              <div className="text-xs text-sidebar-foreground/50">Catering Studio</div>
-            </div>
+          <Link href="/dashboard" className="flex flex-col items-start gap-1">
+            <img src="/Logo_1.svg" alt="By Meesh" className="h-6 w-auto" />
+            <div className="text-xs text-sidebar-foreground/50">Catering Studio</div>
           </Link>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
@@ -80,9 +77,8 @@ export default function Layout({ children }: { children: ReactNode }) {
           <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg hover:bg-muted">
             <Menu className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <ChefHat className="w-5 h-5 text-primary" />
-            By Meesh
+          <div className="flex items-center">
+            <img src="/Logo_1.svg" alt="By Meesh" className="h-5 w-auto" />
           </div>
           <div className="w-8" />
         </div>

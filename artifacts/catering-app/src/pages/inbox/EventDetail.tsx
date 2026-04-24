@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Link, useParams } from "wouter";
+import { Link, useParams, useLocation } from "wouter";
 import Layout from "@/components/Layout";
 import {
   useGetEvent,
   useUpdateEvent,
+  useDeleteEvent,
   getGetEventQueryKey,
   getGetEventsQueryKey,
 } from "@workspace/api-client-react";
@@ -18,9 +19,17 @@ import {
   DollarSign,
   ClipboardList,
   Check,
+  MoreVertical,
+  Trash2,
   Phone,
   MapPin,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 const STATUS_LABELS = {
   new: "New",
@@ -29,9 +38,9 @@ const STATUS_LABELS = {
 } as const;
 
 const STATUS_STYLES = {
-  new: "bg-blue-100 text-blue-700 border-blue-200",
-  in_progress: "bg-amber-100 text-amber-700 border-amber-200",
-  confirmed: "bg-green-100 text-green-700 border-green-200",
+  new: "bg-[hsl(194_89%_92%)] text-[hsl(194_80%_35%)] border-[hsl(194_89%_80%)]",
+  in_progress: "bg-[hsl(41_100%_88%)] text-[hsl(36_95%_32%)] border-[hsl(41_100%_75%)]",
+  confirmed: "bg-[hsl(145_55%_90%)] text-[hsl(145_55%_30%)] border-[hsl(145_55%_75%)]",
 };
 
 export default function EventDetail() {
@@ -44,6 +53,8 @@ export default function EventDetail() {
   });
 
   const updateEvent = useUpdateEvent();
+  const deleteEvent = useDeleteEvent();
+  const [, setLocation] = useLocation();
   const [updating, setUpdating] = useState(false);
 
   const handleStatusChange = async (status: "new" | "in_progress" | "confirmed") => {
@@ -58,6 +69,18 @@ export default function EventDetail() {
       toast.error("Failed to update status");
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!confirm("Delete this event request? This cannot be undone.")) return;
+    try {
+      await deleteEvent.mutateAsync({ id: eventId });
+      qc.invalidateQueries({ queryKey: getGetEventsQueryKey() });
+      toast.success("Event deleted");
+      setLocation("/inbox");
+    } catch {
+      toast.error("Failed to delete event");
     }
   };
 
@@ -99,6 +122,27 @@ export default function EventDetail() {
           <span className={`text-xs px-2.5 py-1 rounded-full font-medium border ${STATUS_STYLES[event.status]}`}>
             {STATUS_LABELS[event.status]}
           </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="More actions"
+                className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+              >
+                <MoreVertical className="w-5 h-5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={handleReject}
+                disabled={deleteEvent.isPending}
+                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete event
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Details card */}
@@ -178,8 +222,8 @@ export default function EventDetail() {
           <Link href={`/inbox/${eventId}/cost`}>
             <div className="group bg-card border border-card-border rounded-xl p-4 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center">
-                  <DollarSign className="w-4 h-4 text-green-700" />
+                <div className="w-9 h-9 rounded-xl bg-[hsl(145_55%_90%)] flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 text-[hsl(145_55%_30%)]" />
                 </div>
                 <div>
                   <div className="text-sm font-medium text-foreground">Cost & Pricing</div>
@@ -189,6 +233,7 @@ export default function EventDetail() {
             </div>
           </Link>
         </div>
+
       </div>
     </Layout>
   );

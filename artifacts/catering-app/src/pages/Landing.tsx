@@ -108,11 +108,8 @@ export default function Landing() {
       {/* Nav */}
       <nav className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <ChefHat className="w-6 h-6 text-primary" />
-            <span className="font-semibold text-foreground tracking-wide">
-              By Meesh
-            </span>
+          <div className="flex items-center">
+            <img src="/Logo_1.svg" alt="By Meesh" className="h-8 w-auto" />
           </div>
           <div className="flex items-center gap-3">
             <Link href="/sign-in">
@@ -131,9 +128,9 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/20 pointer-events-none" />
         <div className="max-w-6xl mx-auto px-6 py-24 text-center relative">
-          <div className="inline-flex items-center gap-2 bg-accent/60 text-accent-foreground rounded-full px-4 py-1.5 text-sm font-medium mb-8">
+          <div className="inline-flex items-center gap-2 bg-secondary/30 text-foreground rounded-full px-4 py-1.5 text-sm font-medium mb-8 border border-secondary/50">
             <Star className="w-3.5 h-3.5 fill-primary text-primary" />
             Private catering in New York city
           </div>
@@ -190,7 +187,7 @@ export default function Landing() {
             {EVENT_TYPES.map((type) => (
               <span
                 key={type}
-                className="bg-accent/50 text-accent-foreground px-4 py-2 rounded-full text-sm font-medium border border-border"
+                className="bg-[hsl(194_89%_92%)] text-[hsl(194_80%_30%)] border border-[hsl(194_89%_80%)] px-4 py-2 rounded-full text-sm font-medium"
               >
                 {type}
               </span>
@@ -251,7 +248,7 @@ export default function Landing() {
       {/* About */}
       <section className="bg-sidebar text-sidebar-foreground py-24">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <ChefHat className="w-10 h-10 text-sidebar-primary mx-auto mb-6" />
+          <img src="/Logo_3.svg" alt="By Meesh" className="h-16 w-auto mx-auto mb-6" />
           <h2 className="text-3xl font-bold mb-6">About Michelle</h2>
           <p className="text-sidebar-foreground/80 text-lg leading-relaxed max-w-2xl mx-auto mb-8">
             With over a decade of experience in fine dining and private
@@ -393,32 +390,13 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="border-t border-border py-24">
-        <div className="max-w-2xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-4">
-            Ready to start planning?
-          </h2>
-          <p className="text-muted-foreground mb-8">
-            Tell me about your event and I'll get back to you within 24 hours.
-          </p>
-          <Link href="/book">
-            <button className="group flex items-center gap-2 mx-auto bg-primary text-primary-foreground px-10 py-4 rounded-xl text-base font-semibold hover:opacity-90 transition-all shadow-md hover:shadow-lg">
-              Book an Event
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </Link>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="border-t border-border py-8">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <ChefHat className="w-4 h-4 text-primary" />
+          <p className="text-xs text-muted-foreground">Crafted with care</p>
+          <div className="text-sm text-muted-foreground">
             By Meesh — Private Catering
           </div>
-          <p className="text-xs text-muted-foreground">Crafted with care</p>
         </div>
       </footer>
     </div>

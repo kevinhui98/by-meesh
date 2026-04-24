@@ -75,60 +75,60 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  /* Warm parchment background */
-  --background: 38 30% 97%;
-  --foreground: 20 25% 12%;
-  --border: 30 20% 85%;
-  --input: 30 20% 85%;
-  --ring: 22 60% 45%;
+  /* Cream background #F4EFE5 */
+  --background: 40 40% 93%;
+  --foreground: 36 23% 9%;
+  --border: 36 20% 85%;
+  --input: 36 20% 85%;
+  --ring: 16 86% 57%;
 
-  /* Card: slightly warmer than background */
-  --card: 36 40% 98%;
-  --card-foreground: 20 25% 12%;
-  --card-border: 30 20% 88%;
+  /* Card */
+  --card: 40 40% 96%;
+  --card-foreground: 36 23% 9%;
+  --card-border: 36 20% 88%;
 
-  /* Sidebar: deep warm brown */
-  --sidebar: 20 35% 14%;
-  --sidebar-foreground: 36 40% 90%;
-  --sidebar-border: 20 30% 20%;
-  --sidebar-primary: 22 65% 52%;
-  --sidebar-primary-foreground: 36 40% 98%;
-  --sidebar-accent: 20 30% 22%;
-  --sidebar-accent-foreground: 36 40% 90%;
-  --sidebar-ring: 22 60% 45%;
+  /* Sidebar: near-black #1B1811 */
+  --sidebar: 36 23% 9%;
+  --sidebar-foreground: 40 40% 93%;
+  --sidebar-border: 36 20% 18%;
+  --sidebar-primary: 16 86% 57%;
+  --sidebar-primary-foreground: 40 40% 96%;
+  --sidebar-accent: 36 20% 16%;
+  --sidebar-accent-foreground: 40 40% 93%;
+  --sidebar-ring: 16 86% 57%;
 
   /* Popover */
-  --popover: 36 40% 98%;
-  --popover-foreground: 20 25% 12%;
-  --popover-border: 30 20% 85%;
+  --popover: 40 40% 96%;
+  --popover-foreground: 36 23% 9%;
+  --popover-border: 36 20% 85%;
 
-  /* Primary: terracotta */
-  --primary: 22 65% 52%;
-  --primary-foreground: 36 40% 98%;
+  /* Primary: orange #EF6432 */
+  --primary: 16 86% 57%;
+  --primary-foreground: 40 40% 96%;
 
-  /* Secondary: warm olive */
-  --secondary: 60 20% 88%;
-  --secondary-foreground: 20 25% 15%;
+  /* Secondary: blue #4BCDF5 */
+  --secondary: 194 89% 63%;
+  --secondary-foreground: 36 23% 9%;
 
   /* Muted */
-  --muted: 36 25% 92%;
-  --muted-foreground: 20 15% 45%;
+  --muted: 40 30% 90%;
+  --muted-foreground: 36 15% 40%;
 
-  /* Accent: warm amber */
-  --accent: 38 70% 88%;
-  --accent-foreground: 20 40% 18%;
+  /* Accent: yellow #FFBB26 */
+  --accent: 41 100% 57%;
+  --accent-foreground: 36 23% 9%;
 
   /* Destructive */
   --destructive: 0 70% 50%;
   --destructive-foreground: 0 0% 100%;
 
-  --chart-1: 22 65% 52%;
-  --chart-2: 142 45% 42%;
-  --chart-3: 38 70% 55%;
-  --chart-4: 270 40% 55%;
-  --chart-5: 0 65% 55%;
+  --chart-1: 16 86% 57%;
+  --chart-2: 194 89% 63%;
+  --chart-3: 41 100% 57%;
+  --chart-4: 36 23% 9%;
+  --chart-5: 40 40% 93%;
 
-  --app-font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --app-font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
   --radius: 0.5rem;
