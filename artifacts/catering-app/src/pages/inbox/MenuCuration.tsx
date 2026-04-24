@@ -31,8 +31,16 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeft, GripVertical, Plus, X, Save, ChefHat, Minus } from "lucide-react";
-
+import {
+  ArrowLeft,
+  GripVertical,
+  Plus,
+  X,
+  Save,
+  ChefHat,
+  Minus,
+} from "lucide-react";
+import { useLocation } from "wouter";
 const COURSES = ["Appetizer", "Main", "Side", "Dessert", "Beverage"] as const;
 type Course = (typeof COURSES)[number];
 
@@ -84,12 +92,19 @@ function DishCard({
         <GripVertical className="w-4 h-4" />
       </button>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-foreground truncate">{dish.name}</div>
+        <div className="text-sm font-medium text-foreground truncate">
+          {dish.name}
+        </div>
         {dish.category && (
-          <div className="text-xs text-muted-foreground capitalize">{dish.category}</div>
+          <div className="text-xs text-muted-foreground capitalize">
+            {dish.category}
+          </div>
         )}
       </div>
-      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex items-center gap-1 shrink-0"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           onClick={() => onQuantityChange(Math.max(1, dish.quantity - 1))}
           className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -121,9 +136,13 @@ function DishCardOverlay({ dish }: { dish: MenuDish }) {
     <div className="flex items-center gap-2 bg-card border border-primary/30 rounded-lg px-3 py-2.5 shadow-lg opacity-95">
       <GripVertical className="w-4 h-4 text-muted-foreground/50 shrink-0" />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-foreground truncate">{dish.name}</div>
+        <div className="text-sm font-medium text-foreground truncate">
+          {dish.name}
+        </div>
         {dish.category && (
-          <div className="text-xs text-muted-foreground capitalize">{dish.category}</div>
+          <div className="text-xs text-muted-foreground capitalize">
+            {dish.category}
+          </div>
         )}
       </div>
     </div>
@@ -175,6 +194,8 @@ export default function MenuCuration() {
   });
   const setMenu = useSetEventMenu();
 
+  const [, navigate] = useLocation();
+
   const [menuDishes, setMenuDishes] = useState<MenuDish[]>([]);
   const [saving, setSaving] = useState(false);
   const [activeCourse, setActiveCourse] = useState<Course>("Main");
@@ -191,13 +212,13 @@ export default function MenuCuration() {
           course: (e.course as Course) || "Main",
           sortOrder: e.sortOrder,
           quantity: e.quantity ?? 1,
-        }))
+        })),
       );
     }
   }, [currentMenu]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
 
   const addDish = (dishId: number, course: Course) => {
@@ -221,7 +242,7 @@ export default function MenuCuration() {
 
   const updateQuantity = (id: string, qty: number) => {
     setMenuDishes((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, quantity: Math.max(1, qty) } : d))
+      prev.map((d) => (d.id === id ? { ...d, quantity: Math.max(1, qty) } : d)),
     );
   };
 
@@ -253,7 +274,7 @@ export default function MenuCuration() {
 
       if (activeItem.course !== targetCourse) {
         return prev.map((d) =>
-          d.id === activeId ? { ...d, course: targetCourse } : d
+          d.id === activeId ? { ...d, course: targetCourse } : d,
         );
       }
 
@@ -300,6 +321,11 @@ export default function MenuCuration() {
       });
       qc.invalidateQueries({ queryKey: getGetEventMenuQueryKey(eventId) });
       toast.success("Menu saved");
+      // clear saving state before navigating so we don't set state on an unmounted component
+      setSaving(false);
+      // navigate back to the event inbox page
+      navigate(`/inbox/${eventId}`);
+      return;
     } catch {
       toast.error("Failed to save menu");
     } finally {
@@ -312,7 +338,8 @@ export default function MenuCuration() {
 
   const availableDishes =
     allDishes?.filter(
-      (d) => !menuDishes.some((m) => m.dishId === d.id && m.course === activeCourse)
+      (d) =>
+        !menuDishes.some((m) => m.dishId === d.id && m.course === activeCourse),
     ) ?? [];
 
   const activeDish = activeDragId
@@ -350,16 +377,19 @@ export default function MenuCuration() {
           {/* Dish library panel */}
           <div className="bg-card border border-card-border rounded-2xl overflow-hidden">
             <div className="p-4 border-b border-border">
-              <h2 className="text-sm font-semibold text-foreground mb-3">Add to Course</h2>
+              <h2 className="text-sm font-semibold text-foreground mb-3">
+                Add to Course
+              </h2>
               <div className="flex flex-wrap gap-1">
                 {COURSES.map((course) => (
                   <button
                     key={course}
                     onClick={() => setActiveCourse(course)}
                     className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors
-                      ${activeCourse === course
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-accent"
+                      ${
+                        activeCourse === course
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-accent"
                       }`}
                   >
                     {course}
@@ -396,7 +426,9 @@ export default function MenuCuration() {
               {allDishes?.length === 0 && (
                 <div className="text-center py-6">
                   <ChefHat className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
-                  <p className="text-xs text-muted-foreground">No dishes in library yet.</p>
+                  <p className="text-xs text-muted-foreground">
+                    No dishes in library yet.
+                  </p>
                   <Link href="/dishes/new">
                     <button className="mt-2 text-xs text-primary hover:underline">
                       Add a dish
@@ -424,7 +456,9 @@ export default function MenuCuration() {
                     className="bg-card border border-card-border rounded-2xl overflow-hidden"
                   >
                     <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-foreground">{course}s</h3>
+                      <h3 className="text-sm font-semibold text-foreground">
+                        {course}s
+                      </h3>
                       <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                         {dishes.length}
                       </span>
@@ -433,13 +467,18 @@ export default function MenuCuration() {
                       items={dishes.map((d) => d.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <CourseDropZone course={course} isEmpty={dishes.length === 0}>
+                      <CourseDropZone
+                        course={course}
+                        isEmpty={dishes.length === 0}
+                      >
                         {dishes.map((dish) => (
                           <DishCard
                             key={dish.id}
                             dish={dish}
                             onRemove={() => removeDish(dish.id)}
-                            onQuantityChange={(qty) => updateQuantity(dish.id, qty)}
+                            onQuantityChange={(qty) =>
+                              updateQuantity(dish.id, qty)
+                            }
                           />
                         ))}
                       </CourseDropZone>

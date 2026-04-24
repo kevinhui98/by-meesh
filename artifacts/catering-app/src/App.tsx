@@ -26,7 +26,11 @@ function PageLoader() {
   );
 }
 
-function Page({ component: Component }: { component: React.ComponentType<Record<string, never>> }) {
+function Page({
+  component: Component,
+}: {
+  component: React.ComponentType<Record<string, never>>;
+}) {
   return (
     <Suspense fallback={<PageLoader />}>
       <Component />
@@ -37,17 +41,37 @@ function Page({ component: Component }: { component: React.ComponentType<Record<
 function Routes() {
   return (
     <Switch>
-      <Route path="/"><Page component={Landing} /></Route>
-      <Route path="/book"><Page component={Book} /></Route>
-      <Route path="/dashboard"><Page component={Dashboard} /></Route>
-      <Route path="/inbox"><Page component={Inbox} /></Route>
-      <Route path="/inbox/:id/menu"><Page component={MenuCuration} /></Route>
-      <Route path="/inbox/:id/cost"><Page component={CostSummary} /></Route>
-      <Route path="/inbox/:id"><Page component={EventDetail} /></Route>
-      <Route path="/dishes"><Page component={DishLibrary} /></Route>
-      <Route path="/dishes/:id"><Page component={DishDetail} /></Route>
-      <Route path="/procurement"><Page component={Procurement} /></Route>
-      <Route><Page component={NotFound} /></Route>
+      <Route path="/">
+        <Page component={Landing} />
+      </Route>
+      <Route path="/book">
+        <Page component={Book} />
+      </Route>
+      <Route path="/dashboard">
+        <Page component={Dashboard} />
+      </Route>
+      <Route path="/inbox">
+        <Page component={Inbox} />
+      </Route>
+      <Route path="/inbox/:id/menu">
+        <Page component={MenuCuration} />
+      </Route>
+      <Route path="/inbox/:id/cost">
+        <Page component={CostSummary} />
+      </Route>
+      <Route path="/inbox/:id">
+        <Page component={EventDetail} />
+      </Route>
+      <Route path="/dishes">
+        <Page component={DishLibrary} />
+      </Route>
+      <Route path="/dishes/:id">
+        <Page component={DishDetail} />
+      </Route>
+      {/* <Route path="/procurement"><Page component={Procurement} /></Route> */}
+      <Route>
+        <Page component={NotFound} />
+      </Route>
     </Switch>
   );
 }

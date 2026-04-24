@@ -67,12 +67,12 @@ export default function Dashboard() {
       icon: BookOpen,
       desc: "Add & edit dishes",
     },
-    {
-      href: "/procurement",
-      label: "Procurement",
-      icon: ShoppingBasket,
-      desc: "View shopping list",
-    },
+    // {
+    //   href: "/procurement",
+    //   label: "Procurement",
+    //   icon: ShoppingBasket,
+    //   desc: "View shopping list",
+    // },
   ];
 
   const hasActiveData =
@@ -191,21 +191,19 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <div className="space-y-1.5">
-                    {summary?.ingredientTotals
-                      ?.slice(0, 5)
-                      .map((ing, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between text-xs"
-                        >
-                          <span className="text-foreground font-medium truncate mr-2">
-                            {ing.name}
-                          </span>
-                          <span className="text-muted-foreground whitespace-nowrap">
-                            {ing.totalQuantity.toFixed(1)} {ing.unit}
-                          </span>
-                        </div>
-                      ))}
+                    {summary?.ingredientTotals?.slice(0, 5).map((ing, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between text-xs"
+                      >
+                        <span className="text-foreground font-medium truncate mr-2">
+                          {ing.name}
+                        </span>
+                        <span className="text-muted-foreground whitespace-nowrap">
+                          {ing.totalQuantity.toFixed(1)} {ing.unit}
+                        </span>
+                      </div>
+                    ))}
                     {(summary?.ingredientTotals?.length ?? 0) > 5 && (
                       <Link href="/procurement">
                         <button className="text-xs text-primary hover:underline mt-1">
@@ -292,7 +290,10 @@ export default function Dashboard() {
             {isLoading ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-12 bg-muted rounded-lg animate-pulse" />
+                  <div
+                    key={i}
+                    className="h-12 bg-muted rounded-lg animate-pulse"
+                  />
                 ))}
               </div>
             ) : summary?.upcomingEvents.length === 0 ? (
@@ -355,7 +356,9 @@ export default function Dashboard() {
                       <div className="text-sm font-medium text-foreground">
                         {label}
                       </div>
-                      <div className="text-xs text-muted-foreground">{desc}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {desc}
+                      </div>
                     </div>
                     <ArrowRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
                   </div>

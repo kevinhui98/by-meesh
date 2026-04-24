@@ -144,7 +144,7 @@ async function handleDishes(
     if (!dish) throw apiError(404, `Dish ${id} not found`);
     return dish;
   }
-  if (method === "PUT") {
+  if (method === "PUT" || method === "PATCH") {
     const existing = await getById<Dish>(db, DISHES, id);
     if (!existing) throw apiError(404, `Dish ${id} not found`);
     const patch = body as UpdateDishBody;
@@ -221,7 +221,7 @@ async function handleEventItem(
     if (!event) throw apiError(404, `Event ${id} not found`);
     return event;
   }
-  if (method === "PUT") {
+  if (method === "PUT" || method === "PATCH") {
     const existing = await getById<EventRequest>(db, EVENTS, id);
     if (!existing) throw apiError(404, `Event ${id} not found`);
     const patch = body as UpdateEventBody;
