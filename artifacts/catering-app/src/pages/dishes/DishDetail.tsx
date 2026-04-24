@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import Layout from "@/components/Layout";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
@@ -13,7 +13,9 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, TrendingUp } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, TrendingUp, Upload, X, Image as ImageIcon } from "lucide-react";
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { storage } from "@/lib/firebase";
 
 const ingredientSchema = z.object({
   name: z.string().min(1, "Required"),
@@ -37,6 +39,7 @@ const schema = z.object({
   flatware: z.string().optional(),
   category: z.string().optional(),
   targetGp: z.coerce.number().min(0).max(100).optional(),
+  imageUrl: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
   ingredients: z.array(ingredientSchema),
   supplies: z.array(supplySchema),
 });
@@ -68,6 +71,116 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 
 const INPUT_CLASS = "w-full px-3.5 py-2.5 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-shadow";
 const TEXTAREA_CLASS = `${INPUT_CLASS} resize-none`;
+
+function ImageUploader({
+  control,
+  setValue,
+}: {
+  control: ReturnType<typeof useForm<FormData>>["control"];
+  setValue: ReturnType<typeof useForm<FormData>>["setValue"];
+}) {
+  const url = useWatch({ control, name: "imageUrl" });
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are allowed");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `dishes/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const fileRef = storageRef(storage, path);
+      await uploadBytes(fileRef, file);
+      const downloadUrl = await getDownloadURL(fileRef);
+      setValue("imageUrl", downloadUrl, { shouldDirty: true });
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      const message = (err as Error)?.message;
+      console.error("Image upload failed", err);
+      if (code === "storage/unauthorized") {
+        toast.error("Upload blocked by Storage rules. Update rules in Firebase Console.");
+      } else {
+        toast.error(`Upload failed: ${code ?? message ?? "unknown error"}`);
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    if (!url) return;
+    setValue("imageUrl", "", { shouldDirty: true });
+    // best-effort: delete from storage if it's a firebase storage URL
+    try {
+      if (url.includes("firebasestorage.googleapis.com")) {
+        const fileRef = storageRef(storage, decodeURIComponent(url.split("/o/")[1].split("?")[0]));
+        await deleteObject(fileRef);
+      }
+    } catch {
+      // ignore — form field is cleared regardless
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
+  };
+
+  if (url) {
+    return (
+      <div className="relative inline-block">
+        <img src={url} alt="Dish" className="h-40 w-auto rounded-lg border border-border object-cover" />
+        <button
+          type="button"
+          onClick={handleRemove}
+          aria-label="Remove image"
+          className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md hover:opacity-90 transition-opacity"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragOver(true);
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={onDrop}
+      aria-disabled={uploading}
+      className={`w-full border-2 border-dashed rounded-xl py-10 px-6 flex flex-col items-center justify-center gap-2 transition-colors
+        ${dragOver ? "border-primary bg-primary/5" : "border-border"}
+        ${uploading ? "opacity-60 cursor-wait" : ""}`}
+    >
+      {uploading ? (
+        <>
+          <Upload className="w-6 h-6 text-muted-foreground animate-pulse" />
+          <p className="text-sm text-muted-foreground">Uploading...</p>
+        </>
+      ) : (
+        <>
+          <ImageIcon className="w-6 h-6 text-muted-foreground" />
+          <p className="text-sm text-foreground">
+            <span className="text-primary font-medium">Drag and drop</span> an image
+          </p>
+          <p className="text-xs text-muted-foreground">PNG, JPG, WEBP up to 5MB</p>
+        </>
+      )}
+    </div>
+  );
+}
 
 function PricingPanel({
   control,
@@ -152,9 +265,9 @@ export default function DishDetail() {
   const createDish = useCreateDish();
   const updateDish = useUpdateDish();
 
-  const { register, control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { ingredients: [], supplies: [], targetGp: undefined },
+    defaultValues: { ingredients: [], supplies: [], targetGp: undefined, imageUrl: "" },
   });
 
   const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient } = useFieldArray({ control, name: "ingredients" });
@@ -171,6 +284,7 @@ export default function DishDetail() {
         flatware: dish.flatware ?? "",
         category: dish.category ?? "",
         targetGp: dish.targetGp ?? undefined,
+        imageUrl: dish.imageUrl ?? "",
         ingredients: dish.ingredients ?? [],
         supplies: dish.supplies ?? [],
       });
@@ -188,6 +302,7 @@ export default function DishDetail() {
         flatware: data.flatware || null,
         category: data.category || null,
         targetGp: data.targetGp ?? null,
+        imageUrl: data.imageUrl || null,
         ingredients: data.ingredients,
         supplies: data.supplies,
       };
@@ -241,6 +356,11 @@ export default function DishDetail() {
                   <textarea {...register("description")} rows={2} placeholder="Brief description of the dish..." className={TEXTAREA_CLASS} />
                 </Field>
               </div>
+            </Section>
+
+            {/* Image */}
+            <Section title="Image">
+              <ImageUploader control={control} setValue={setValue} />
             </Section>
 
             {/* Detailed notes */}
@@ -346,8 +466,8 @@ export default function DishDetail() {
             </Section>
 
             <div className="flex gap-3 pt-2">
-              <Link href="/dishes">
-                <button type="button" className="flex-1 py-3 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors text-center">
+              <Link href="/dishes" className="flex-1">
+                <button type="button" className="w-full py-3 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors">
                   Cancel
                 </button>
               </Link>

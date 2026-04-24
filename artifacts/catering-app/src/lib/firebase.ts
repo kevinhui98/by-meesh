@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 import { createFirebaseBackend, setBackend } from "@workspace/api-client-react";
 
 const config = {
@@ -21,5 +22,6 @@ for (const [key, value] of Object.entries(config)) {
 
 const app = getApps()[0] ?? initializeApp(config);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 setBackend(createFirebaseBackend(db));

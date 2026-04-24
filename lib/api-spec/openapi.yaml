@@ -401,6 +401,9 @@ components:
         targetGp:
           type: ["number", "null"]
           description: Target gross profit percentage (0–99) used to calculate suggested sell price
+        imageUrl:
+          type: ["string", "null"]
+          description: Optional URL to a dish photo
         createdAt:
           type: string
       required:
@@ -438,6 +441,8 @@ components:
         targetGp:
           type: ["number", "null"]
           description: Target gross profit percentage (0–99)
+        imageUrl:
+          type: ["string", "null"]
       required:
         - name
         - ingredients
@@ -471,6 +476,8 @@ components:
         targetGp:
           type: ["number", "null"]
           description: Target gross profit percentage (0–99)
+        imageUrl:
+          type: ["string", "null"]
 
     # ── Event Request ──
     EventRequest:

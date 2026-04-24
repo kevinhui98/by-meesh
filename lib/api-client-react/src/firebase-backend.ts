@@ -126,6 +126,7 @@ async function handleDishes(
         flatware: payload.flatware ?? null,
         category: payload.category ?? null,
         targetGp: payload.targetGp ?? null,
+        imageUrl: payload.imageUrl ?? null,
         ingredients: payload.ingredients ?? [],
         supplies: payload.supplies ?? [],
         createdAt: nowIso(),
@@ -158,6 +159,7 @@ async function handleDishes(
       ...("flatware" in patch ? { flatware: patch.flatware ?? null } : {}),
       ...("category" in patch ? { category: patch.category ?? null } : {}),
       ...("targetGp" in patch ? { targetGp: patch.targetGp ?? null } : {}),
+      ...("imageUrl" in patch ? { imageUrl: patch.imageUrl ?? null } : {}),
       ...(patch.ingredients ? { ingredients: patch.ingredients } : {}),
       ...(patch.supplies ? { supplies: patch.supplies } : {}),
     };

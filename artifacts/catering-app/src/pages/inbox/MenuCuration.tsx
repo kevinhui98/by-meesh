@@ -23,6 +23,7 @@ import {
   useSensors,
   PointerSensor,
   useDroppable,
+  useDraggable,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -43,6 +44,25 @@ import {
 import { useLocation } from "wouter";
 const COURSES = ["Appetizer", "Main", "Side", "Dessert", "Beverage"] as const;
 type Course = (typeof COURSES)[number];
+
+const LIBRARY_CATEGORIES = [
+  "appetizer",
+  "main",
+  "side",
+  "dessert",
+  "beverage",
+  "other",
+] as const;
+
+function categoryMatchesCourse(
+  category: string | null | undefined,
+  course: Course,
+): boolean {
+  if (!category) return true;
+  const c = category.toLowerCase();
+  if (c === "other") return true;
+  return c === course.toLowerCase();
+}
 
 interface MenuDish {
   id: string;
@@ -70,7 +90,10 @@ function DishCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: dish.id, data: { course: dish.course } });
+  } = useSortable({
+    id: dish.id,
+    data: { course: dish.course, category: dish.category },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -153,27 +176,103 @@ function CourseDropZone({
   course,
   children,
   isEmpty,
+  activeDragCategory,
 }: {
   course: Course;
   children: React.ReactNode;
   isEmpty: boolean;
+  activeDragCategory: string | null;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `course-${course}` });
+  const isDragging = activeDragCategory !== null;
+  const isMatch =
+    !isDragging || categoryMatchesCourse(activeDragCategory, course);
+  const showInvalid = isOver && !isMatch;
+  const showValid = isOver && isMatch;
+
   return (
     <div
       ref={setNodeRef}
-      className={`p-3 space-y-2 min-h-[60px] transition-colors ${isOver && isEmpty ? "bg-primary/5 rounded-lg" : ""}`}
+      className={`p-3 space-y-2 min-h-[60px] transition-colors
+        ${showValid && isEmpty ? "bg-primary/5 rounded-lg" : ""}
+        ${showInvalid ? "bg-destructive/5 rounded-lg" : ""}`}
     >
       {isEmpty ? (
         <div
-          className={`text-center py-3 text-xs text-muted-foreground border-2 border-dashed rounded-lg transition-colors
-            ${isOver ? "border-primary/50 text-primary" : "border-border"}`}
+          className={`text-center py-3 text-xs border-2 border-dashed rounded-lg transition-colors
+            ${showInvalid ? "border-destructive/50 text-destructive" : ""}
+            ${showValid ? "border-primary/50 text-primary" : ""}
+            ${!isOver ? "border-border text-muted-foreground" : ""}`}
         >
-          {isOver ? "Release to drop here" : "Drop dishes here"}
+          {showInvalid
+            ? "Different category"
+            : showValid
+              ? "Release to drop here"
+              : "Drop dishes here"}
         </div>
       ) : (
-        children
+        <>
+          {children}
+          {showInvalid && (
+            <div className="text-center py-2 text-xs text-destructive border-2 border-destructive/50 border-dashed rounded-lg">
+              Different category
+            </div>
+          )}
+        </>
       )}
+    </div>
+  );
+}
+
+function DraggableLibraryDish({
+  dish,
+}: {
+  dish: { id: number; name: string; category?: string | null };
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `library-${dish.id}`,
+    data: { type: "library", dishId: dish.id, category: dish.category },
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors cursor-grab active:cursor-grabbing select-none ${isDragging ? "opacity-40" : ""}`}
+    >
+      <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-foreground truncate">
+          {dish.name}
+        </div>
+        {dish.category && (
+          <div className="text-xs text-muted-foreground capitalize">
+            {dish.category}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LibraryDishOverlay({
+  dish,
+}: {
+  dish: { name: string; category?: string | null };
+}) {
+  return (
+    <div className="flex items-center gap-2 bg-card border border-primary/30 rounded-lg px-3 py-2.5 shadow-lg opacity-95">
+      <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-foreground truncate">
+          {dish.name}
+        </div>
+        {dish.category && (
+          <div className="text-xs text-muted-foreground capitalize">
+            {dish.category}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -198,8 +297,10 @@ export default function MenuCuration() {
 
   const [menuDishes, setMenuDishes] = useState<MenuDish[]>([]);
   const [saving, setSaving] = useState(false);
-  const [activeCourse, setActiveCourse] = useState<Course>("Main");
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [activeDragCategory, setActiveDragCategory] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (currentMenu) {
@@ -248,6 +349,11 @@ export default function MenuCuration() {
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveDragId(event.active.id as string);
+    const cat = event.active.data.current?.category as
+      | string
+      | null
+      | undefined;
+    setActiveDragCategory(cat ?? null);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -256,6 +362,9 @@ export default function MenuCuration() {
 
     const activeId = active.id as string;
     const overId = over.id as string;
+
+    // Library drags are handled on drop end — no preview reordering needed
+    if (activeId.startsWith("library-")) return;
 
     if (activeId === overId) return;
 
@@ -272,6 +381,11 @@ export default function MenuCuration() {
 
       if (activeItem.course === targetCourse && !isCourseContainer) return prev;
 
+      // Enforce category match when moving between courses
+      if (!categoryMatchesCourse(activeItem.category, targetCourse)) {
+        return prev;
+      }
+
       if (activeItem.course !== targetCourse) {
         return prev.map((d) =>
           d.id === activeId ? { ...d, course: targetCourse } : d,
@@ -285,11 +399,30 @@ export default function MenuCuration() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDragId(null);
+    setActiveDragCategory(null);
 
     if (!over) return;
 
     const activeId = active.id as string;
     const overId = over.id as string;
+
+    // Library dish dropped onto a course zone or existing menu dish
+    if (activeId.startsWith("library-")) {
+      const dishId = parseInt(activeId.replace("library-", ""));
+      const dish = allDishes?.find((d) => d.id === dishId);
+      const targetCourse: Course | null = overId.startsWith("course-")
+        ? (overId.replace("course-", "") as Course)
+        : (menuDishes.find((d) => d.id === overId)?.course ?? null);
+      if (!targetCourse || !dish) return;
+      if (!categoryMatchesCourse(dish.category, targetCourse)) {
+        toast.error(
+          `${dish.name} is ${dish.category ?? "uncategorized"} — can't add to ${targetCourse}s`,
+        );
+        return;
+      }
+      addDish(dishId, targetCourse);
+      return;
+    }
 
     if (activeId === overId) return;
 
@@ -336,15 +469,26 @@ export default function MenuCuration() {
   const courseDishes = (course: Course) =>
     menuDishes.filter((d) => d.course === course);
 
-  const availableDishes =
-    allDishes?.filter(
-      (d) =>
-        !menuDishes.some((m) => m.dishId === d.id && m.course === activeCourse),
-    ) ?? [];
+  const availableDishes = allDishes ?? [];
 
-  const activeDish = activeDragId
-    ? menuDishes.find((d) => d.id === activeDragId)
-    : null;
+  const groupedLibraryDishes = LIBRARY_CATEGORIES.map((cat) => ({
+    category: cat,
+    dishes: availableDishes.filter(
+      (d) => (d.category?.toLowerCase() || "other") === cat,
+    ),
+  })).filter((g) => g.dishes.length > 0);
+
+  const isLibraryDrag = activeDragId?.startsWith("library-") ?? false;
+  const activeDish =
+    activeDragId && !isLibraryDrag
+      ? menuDishes.find((d) => d.id === activeDragId)
+      : null;
+  const activeLibraryDish =
+    activeDragId && isLibraryDrag
+      ? allDishes?.find(
+          (d) => d.id === parseInt(activeDragId.replace("library-", "")),
+        )
+      : null;
 
   return (
     <Layout>
@@ -373,81 +517,63 @@ export default function MenuCuration() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Dish library panel */}
-          <div className="bg-card border border-card-border rounded-2xl overflow-hidden">
-            <div className="p-4 border-b border-border">
-              <h2 className="text-sm font-semibold text-foreground mb-3">
-                Add to Course
-              </h2>
-              <div className="flex flex-wrap gap-1">
-                {COURSES.map((course) => (
-                  <button
-                    key={course}
-                    onClick={() => setActiveCourse(course)}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors
-                      ${
-                        activeCourse === course
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground hover:bg-accent"
-                      }`}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Dish library panel */}
+            <div className="bg-card border border-card-border rounded-2xl overflow-hidden h-fit">
+              <div className="p-4 border-b border-border">
+                <h2 className="text-sm font-semibold text-foreground">
+                  Dish Library
+                </h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Drag a dish into a course
+                </p>
+              </div>
+              <div className="p-3 max-h-[32rem] overflow-y-auto">
+                {availableDishes.length === 0 && allDishes?.length !== 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    No dishes available
+                  </p>
+                )}
+                {groupedLibraryDishes.map((group, idx) => (
+                  <div
+                    key={group.category}
+                    className={idx > 0 ? "mt-3" : ""}
                   >
-                    {course}
-                  </button>
+                    <div className="px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground capitalize">
+                      {group.category}
+                    </div>
+                    <div className="space-y-1.5">
+                      {group.dishes.map((dish) => (
+                        <DraggableLibraryDish key={dish.id} dish={dish} />
+                      ))}
+                    </div>
+                  </div>
                 ))}
+                {allDishes?.length === 0 && (
+                  <div className="text-center py-6">
+                    <ChefHat className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
+                    <p className="text-xs text-muted-foreground">
+                      No dishes in library yet.
+                    </p>
+                    <Link href="/dishes/new">
+                      <button className="mt-2 text-xs text-primary hover:underline">
+                        Add a dish
+                      </button>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="p-3 max-h-96 overflow-y-auto space-y-1.5">
-              {availableDishes.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">
-                  All dishes added to {activeCourse}
-                </p>
-              ) : (
-                availableDishes.map((dish) => (
-                  <button
-                    key={dish.id}
-                    onClick={() => addDish(dish.id, activeCourse)}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left group"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-primary shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-foreground truncate">
-                        {dish.name}
-                      </div>
-                      {dish.category && (
-                        <div className="text-xs text-muted-foreground capitalize">
-                          {dish.category}
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                ))
-              )}
-              {allDishes?.length === 0 && (
-                <div className="text-center py-6">
-                  <ChefHat className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
-                  <p className="text-xs text-muted-foreground">
-                    No dishes in library yet.
-                  </p>
-                  <Link href="/dishes/new">
-                    <button className="mt-2 text-xs text-primary hover:underline">
-                      Add a dish
-                    </button>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* Menu courses */}
-          <div className="lg:col-span-2 space-y-4">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCorners}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDragEnd={handleDragEnd}
-            >
+            {/* Menu courses */}
+            <div className="lg:col-span-2 space-y-4">
               {COURSES.map((course) => {
                 const dishes = courseDishes(course);
                 return (
@@ -470,6 +596,7 @@ export default function MenuCuration() {
                       <CourseDropZone
                         course={course}
                         isEmpty={dishes.length === 0}
+                        activeDragCategory={activeDragCategory}
                       >
                         {dishes.map((dish) => (
                           <DishCard
@@ -486,13 +613,17 @@ export default function MenuCuration() {
                   </div>
                 );
               })}
-
-              <DragOverlay>
-                {activeDish ? <DishCardOverlay dish={activeDish} /> : null}
-              </DragOverlay>
-            </DndContext>
+            </div>
           </div>
-        </div>
+
+          <DragOverlay>
+            {activeDish ? (
+              <DishCardOverlay dish={activeDish} />
+            ) : activeLibraryDish ? (
+              <LibraryDishOverlay dish={activeLibraryDish} />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </div>
     </Layout>
   );
