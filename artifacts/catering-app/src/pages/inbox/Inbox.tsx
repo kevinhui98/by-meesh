@@ -1,8 +1,15 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import Layout from "@/components/Layout";
-import { useGetEvents, getGetEventsQueryKey, GetEventsStatus } from "@workspace/api-client-react";
-import { Calendar, Users, ChevronRight, Inbox as InboxIcon, Plus } from "lucide-react";
+import {
+  useGetEvents,
+  useDeleteEvent,
+  getGetEventsQueryKey,
+  GetEventsStatus,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Calendar, Users, X, Inbox as InboxIcon } from "lucide-react";
 
 const TABS = [
   { key: "all", label: "All" },
@@ -18,10 +25,10 @@ const API_STATUS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  new: "bg-blue-100 text-blue-700",
-  in_progress: "bg-amber-100 text-amber-700",
-  confirmed: "bg-green-100 text-green-700",
-  done: "bg-green-100 text-green-700",
+  new: "bg-[hsl(194_89%_92%)] text-[hsl(194_80%_35%)]",
+  in_progress: "bg-[hsl(41_100%_88%)] text-[hsl(36_95%_32%)]",
+  confirmed: "bg-[hsl(145_55%_90%)] text-[hsl(145_55%_30%)]",
+  done: "bg-[hsl(145_55%_90%)] text-[hsl(145_55%_30%)]",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -33,12 +40,28 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function Inbox() {
   const [activeTab, setActiveTab] = useState<Tab>("all");
+  const qc = useQueryClient();
 
   const apiStatus = activeTab !== "all" ? (API_STATUS[activeTab] ?? activeTab) as GetEventsStatus : undefined;
   const { data: events, isLoading } = useGetEvents(
     apiStatus ? { status: apiStatus } : {},
     { query: { queryKey: getGetEventsQueryKey(apiStatus ? { status: apiStatus } : {}) } }
   );
+
+  const deleteEvent = useDeleteEvent();
+
+  const handleDelete = async (e: React.MouseEvent, id: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm("Delete this event request? This cannot be undone.")) return;
+    try {
+      await deleteEvent.mutateAsync({ id });
+      qc.invalidateQueries({ queryKey: getGetEventsQueryKey() });
+      toast.success("Event deleted");
+    } catch {
+      toast.error("Failed to delete event");
+    }
+  };
 
   return (
     <Layout>
@@ -81,32 +104,41 @@ export default function Inbox() {
         ) : (
           <div className="space-y-2">
             {events?.map((event) => (
-              <Link key={event.id} href={`/inbox/${event.id}`}>
-                <div className="group bg-card border border-card-border rounded-xl p-4 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-1.5">
-                        <h3 className="font-medium text-foreground text-sm">{event.clientName}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[event.status]}`}>
-                          {STATUS_LABEL[event.status] ?? event.status.replace("_", " ")}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {event.eventDate}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          {event.guestCount} guests
-                        </span>
-                        <span className="text-primary/70 font-medium">{event.eventType}</span>
-                      </div>
+              <div
+                key={event.id}
+                className="group bg-card border border-card-border rounded-xl p-4 hover:border-primary/30 hover:shadow-sm transition-all"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <Link href={`/inbox/${event.id}`} className="flex-1 min-w-0 cursor-pointer">
+                    <div className="flex items-center gap-3 mb-1.5">
+                      <h3 className="font-medium text-foreground text-sm">{event.clientName}</h3>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[event.status]}`}>
+                        {STATUS_LABEL[event.status] ?? event.status.replace("_", " ")}
+                      </span>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0 ml-4" />
-                  </div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {event.eventDate}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {event.guestCount} guests
+                      </span>
+                      <span className="text-primary/70 font-medium">{event.eventType}</span>
+                    </div>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDelete(e, event.id)}
+                    disabled={deleteEvent.isPending}
+                    aria-label="Delete event"
+                    className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}

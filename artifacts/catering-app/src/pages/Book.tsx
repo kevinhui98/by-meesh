@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCreateEvent } from "@workspace/api-client-react";
 import { toast } from "sonner";
-import { ChefHat, CheckCircle2, ArrowLeft } from "lucide-react";
+import { CheckCircle2, ArrowLeft } from "lucide-react";
 
 const schema = z.object({
   clientName: z.string().min(2, "Name is required"),
@@ -85,16 +85,12 @@ export default function Book() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
-        <div className="max-w-2xl mx-auto px-6 h-16 flex items-center gap-4">
+        <div className="max-w-2xl mx-auto px-6 h-16 flex items-center">
           <Link href="/">
             <button className="p-1.5 rounded-lg hover:bg-muted transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </button>
           </Link>
-          <div className="flex items-center gap-2">
-            <ChefHat className="w-5 h-5 text-primary" />
-            <span className="font-semibold text-sm">By Meesh</span>
-          </div>
         </div>
       </div>
 

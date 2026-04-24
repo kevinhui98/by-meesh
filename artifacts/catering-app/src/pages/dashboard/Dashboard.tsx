@@ -110,21 +110,21 @@ export default function Dashboard() {
               label="New Requests"
               value={summary?.newEvents ?? 0}
               icon={Inbox}
-              color="bg-blue-100 text-blue-600"
+              color="bg-[hsl(194_89%_92%)] text-[hsl(194_80%_35%)]"
             />
             <StatCard
               label="At Cost"
               value={`$${(summary?.totalAtCost ?? 0).toFixed(0)}`}
               icon={DollarSign}
               sub="Active events"
-              color="bg-accent text-accent-foreground"
+              color="bg-[hsl(41_100%_88%)] text-[hsl(36_95%_32%)]"
             />
             <StatCard
               label="Est. Revenue"
               value={`$${(summary?.totalEstimatedRevenue ?? 0).toFixed(0)}`}
               icon={TrendingUp}
               sub="30% default margin"
-              color="bg-green-100 text-green-700"
+              color="bg-[hsl(145_55%_90%)] text-[hsl(145_55%_30%)]"
             />
           </div>
         )}
@@ -140,17 +140,17 @@ export default function Dashboard() {
                 {
                   label: "New",
                   count: summary.newEvents,
-                  color: "bg-blue-500",
+                  color: "bg-[hsl(194_89%_63%)]",
                 },
                 {
                   label: "In Progress",
                   count: summary.inProgressEvents,
-                  color: "bg-amber-500",
+                  color: "bg-[hsl(41_100%_57%)]",
                 },
                 {
                   label: "Confirmed",
                   count: summary.confirmedEvents,
-                  color: "bg-green-500",
+                  color: "bg-[hsl(145_55%_55%)]",
                 },
               ].map(({ label, count, color }) => (
                 <div key={label} className="text-center">
@@ -324,10 +324,10 @@ export default function Dashboard() {
                           className={`text-xs mt-0.5 px-2 py-0.5 rounded-full inline-block
                           ${
                             event.status === "confirmed"
-                              ? "bg-green-100 text-green-700"
+                              ? "bg-[hsl(145_55%_90%)] text-[hsl(145_55%_30%)]"
                               : event.status === "in_progress"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-blue-100 text-blue-700"
+                                ? "bg-[hsl(41_100%_88%)] text-[hsl(36_95%_32%)]"
+                                : "bg-[hsl(194_89%_92%)] text-[hsl(194_80%_35%)]"
                           }`}
                         >
                           {event.status.replace("_", " ")}
