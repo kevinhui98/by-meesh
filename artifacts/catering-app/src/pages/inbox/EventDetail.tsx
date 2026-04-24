@@ -34,13 +34,14 @@ import {
 const STATUS_LABELS = {
   new: "New",
   in_progress: "In Progress",
-  confirmed: "Confirmed",
+  done: "Done",
 } as const;
 
 const STATUS_STYLES = {
   new: "bg-[hsl(194_89%_92%)] text-[hsl(194_80%_35%)] border-[hsl(194_89%_80%)]",
-  in_progress: "bg-[hsl(41_100%_88%)] text-[hsl(36_95%_32%)] border-[hsl(41_100%_75%)]",
-  confirmed: "bg-[hsl(145_55%_90%)] text-[hsl(145_55%_30%)] border-[hsl(145_55%_75%)]",
+  in_progress:
+    "bg-[hsl(41_100%_88%)] text-[hsl(36_95%_32%)] border-[hsl(41_100%_75%)]",
+  done: "bg-[hsl(145_55%_90%)] text-[hsl(145_55%_30%)] border-[hsl(145_55%_75%)]",
 };
 
 export default function EventDetail() {
@@ -57,9 +58,7 @@ export default function EventDetail() {
   const [, setLocation] = useLocation();
   const [updating, setUpdating] = useState(false);
 
-  const handleStatusChange = async (
-    status: "new" | "in_progress" | "confirmed",
-  ) => {
+  const handleStatusChange = async (status: "new" | "in_progress" | "done") => {
     if (!event || event.status === status) return;
     setUpdating(true);
     // optimistic update: update cache immediately
@@ -102,7 +101,7 @@ export default function EventDetail() {
   };
 
   const handleReject = async () => {
-    if (!confirm("Delete this event request? This cannot be undone.")) return;
+    if (!done("Delete this event request? This cannot be undone.")) return;
     try {
       await deleteEvent.mutateAsync({ id: eventId });
       qc.invalidateQueries({ queryKey: getGetEventsQueryKey() });
@@ -237,7 +236,7 @@ export default function EventDetail() {
             Update Status
           </h2>
           <div className="flex gap-2">
-            {(["new", "in_progress", "confirmed"] as const).map((status) => (
+            {(["new", "in_progress", "done"] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => handleStatusChange(status)}
@@ -293,7 +292,6 @@ export default function EventDetail() {
             </div>
           </Link>
         </div>
-
       </div>
     </Layout>
   );
