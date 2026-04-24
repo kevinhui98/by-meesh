@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// NOTE: auth has been removed from the frontend, so these rules are fully open.
+// Before going to production, gate with App Check, a callable Function, or
+// re-introduce Firebase Auth.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

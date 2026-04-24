@@ -1,0 +1,737 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Catering management API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: dishes
+    description: Dish library management
+  - name: events
+    description: Event request management
+  - name: menus
+    description: Menu curation
+  - name: dashboard
+    description: Dashboard summary data
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── DISHES ───────────────────────────────────────────────────────────────
+  /dishes:
+    get:
+      operationId: getDishes
+      tags: [dishes]
+      summary: List all dishes in the library
+      responses:
+        "200":
+          description: List of dishes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Dish"
+    post:
+      operationId: createDish
+      tags: [dishes]
+      summary: Add a new dish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDishBody"
+      responses:
+        "201":
+          description: Created dish
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dish"
+
+  /dishes/{id}:
+    get:
+      operationId: getDish
+      tags: [dishes]
+      summary: Get a single dish
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Dish
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dish"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateDish
+      tags: [dishes]
+      summary: Update a dish
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDishBody"
+      responses:
+        "200":
+          description: Updated dish
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dish"
+    delete:
+      operationId: deleteDish
+      tags: [dishes]
+      summary: Delete a dish
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── EVENT REQUESTS ───────────────────────────────────────────────────────
+  /events:
+    get:
+      operationId: getEvents
+      tags: [events]
+      summary: List all event requests
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [new, in_progress, confirmed]
+      responses:
+        "200":
+          description: List of event requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventRequest"
+    post:
+      operationId: createEvent
+      tags: [events]
+      summary: Submit a new event request (public)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventBody"
+      responses:
+        "201":
+          description: Created event request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventRequest"
+
+  /events/{id}:
+    get:
+      operationId: getEvent
+      tags: [events]
+      summary: Get a single event request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Event request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventRequest"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateEvent
+      tags: [events]
+      summary: Update event status or details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventBody"
+      responses:
+        "200":
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventRequest"
+    delete:
+      operationId: deleteEvent
+      tags: [events]
+      summary: Delete an event request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── MENU CURATION ────────────────────────────────────────────────────────
+  /events/{id}/menu:
+    get:
+      operationId: getEventMenu
+      tags: [menus]
+      summary: Get the curated menu for an event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Menu items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuEntry"
+    put:
+      operationId: setEventMenu
+      tags: [menus]
+      summary: Replace the full curated menu for an event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetEventMenuBody"
+      responses:
+        "200":
+          description: Updated menu
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuEntry"
+
+  /events/{id}/cost:
+    get:
+      operationId: getEventCost
+      tags: [menus]
+      summary: Get per-event cost breakdown
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: margin
+          in: query
+          required: false
+          schema:
+            type: number
+            description: Margin multiplier (e.g. 1.3 = 30% margin). Defaults to 1.
+      responses:
+        "200":
+          description: Cost breakdown
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventCost"
+
+  # ─── DASHBOARD ────────────────────────────────────────────────────────────
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Aggregate resource and cost summary across all active events
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/procurement:
+    get:
+      operationId: getProcurementList
+      tags: [dashboard]
+      summary: Aggregated procurement list across all confirmed/in-progress events
+      parameters:
+        - name: eventId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Procurement list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcurementItem"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    # ── Shared sub-types ──
+    Ingredient:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: string
+        unit:
+          type: string
+        unitCost:
+          type: number
+      required:
+        - name
+        - quantity
+        - unit
+        - unitCost
+
+    Supply:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: string
+        unitCost:
+          type: number
+      required:
+        - name
+        - quantity
+        - unitCost
+
+    # ── Dish ──
+    Dish:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        recipe:
+          type: ["string", "null"]
+        prep:
+          type: ["string", "null"]
+        service:
+          type: ["string", "null"]
+        flatware:
+          type: ["string", "null"]
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ingredient"
+        supplies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Supply"
+        category:
+          type: ["string", "null"]
+          description: e.g. appetizer, main, dessert, side
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - ingredients
+        - supplies
+        - createdAt
+
+    CreateDishBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        recipe:
+          type: ["string", "null"]
+        prep:
+          type: ["string", "null"]
+        service:
+          type: ["string", "null"]
+        flatware:
+          type: ["string", "null"]
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ingredient"
+        supplies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Supply"
+        category:
+          type: ["string", "null"]
+      required:
+        - name
+        - ingredients
+        - supplies
+
+    UpdateDishBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        recipe:
+          type: ["string", "null"]
+        prep:
+          type: ["string", "null"]
+        service:
+          type: ["string", "null"]
+        flatware:
+          type: ["string", "null"]
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ingredient"
+        supplies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Supply"
+        category:
+          type: ["string", "null"]
+
+    # ── Event Request ──
+    EventRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        clientName:
+          type: string
+        clientEmail:
+          type: string
+        eventDate:
+          type: string
+        guestCount:
+          type: integer
+        eventType:
+          type: string
+        restrictions:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [new, in_progress, confirmed]
+        createdAt:
+          type: string
+      required:
+        - id
+        - clientName
+        - clientEmail
+        - eventDate
+        - guestCount
+        - eventType
+        - status
+        - createdAt
+
+    CreateEventBody:
+      type: object
+      properties:
+        clientName:
+          type: string
+        clientEmail:
+          type: string
+        eventDate:
+          type: string
+        guestCount:
+          type: integer
+        eventType:
+          type: string
+        restrictions:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+      required:
+        - clientName
+        - clientEmail
+        - eventDate
+        - guestCount
+        - eventType
+
+    UpdateEventBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [new, in_progress, confirmed]
+        clientName:
+          type: string
+        clientEmail:
+          type: string
+        eventDate:
+          type: string
+        guestCount:
+          type: integer
+        eventType:
+          type: string
+        restrictions:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+
+    # ── Menu ──
+    MenuEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        eventId:
+          type: integer
+        dishId:
+          type: integer
+        course:
+          type: string
+          description: e.g. appetizer, main, dessert, side, beverage
+        sortOrder:
+          type: integer
+        dish:
+          $ref: "#/components/schemas/Dish"
+      required:
+        - id
+        - eventId
+        - dishId
+        - course
+        - sortOrder
+        - dish
+
+    MenuEntryInput:
+      type: object
+      properties:
+        dishId:
+          type: integer
+        course:
+          type: string
+        sortOrder:
+          type: integer
+      required:
+        - dishId
+        - course
+        - sortOrder
+
+    SetEventMenuBody:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/MenuEntryInput"
+      required:
+        - entries
+
+    # ── Cost ──
+    CostLine:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: string
+        unitCost:
+          type: number
+        totalCost:
+          type: number
+        type:
+          type: string
+          enum: [ingredient, supply]
+      required:
+        - name
+        - quantity
+        - unitCost
+        - totalCost
+        - type
+
+    EventCost:
+      type: object
+      properties:
+        eventId:
+          type: integer
+        guestCount:
+          type: integer
+        atCost:
+          type: number
+        margin:
+          type: number
+        totalPrice:
+          type: number
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/CostLine"
+      required:
+        - eventId
+        - guestCount
+        - atCost
+        - margin
+        - totalPrice
+        - lines
+
+    # ── Dashboard ──
+    IngredientAggregate:
+      type: object
+      properties:
+        name:
+          type: string
+        unit:
+          type: string
+        totalQuantity:
+          type: number
+        totalCost:
+          type: number
+      required: [name, unit, totalQuantity, totalCost]
+
+    SupplyAggregate:
+      type: object
+      properties:
+        name:
+          type: string
+        totalQuantity:
+          type: number
+        totalCost:
+          type: number
+      required: [name, totalQuantity, totalCost]
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalEvents:
+          type: integer
+        newEvents:
+          type: integer
+        inProgressEvents:
+          type: integer
+        confirmedEvents:
+          type: integer
+        totalDishes:
+          type: integer
+        totalEstimatedRevenue:
+          type: number
+        totalAtCost:
+          type: number
+        upcomingEvents:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventRequest"
+        ingredientTotals:
+          type: array
+          items:
+            $ref: "#/components/schemas/IngredientAggregate"
+        supplyTotals:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupplyAggregate"
+        flatwareRequired:
+          type: array
+          items:
+            type: string
+      required:
+        - totalEvents
+        - newEvents
+        - inProgressEvents
+        - confirmedEvents
+        - totalDishes
+        - totalEstimatedRevenue
+        - totalAtCost
+        - upcomingEvents
+        - ingredientTotals
+        - supplyTotals
+        - flatwareRequired
+
+    ProcurementItem:
+      type: object
+      properties:
+        name:
+          type: string
+        totalQuantity:
+          type: string
+        unit:
+          type: string
+        estimatedCost:
+          type: number
+        type:
+          type: string
+          enum: [ingredient, supply]
+        events:
+          type: array
+          items:
+            type: string
+      required:
+        - name
+        - totalQuantity
+        - unit
+        - estimatedCost
+        - type
+        - events
