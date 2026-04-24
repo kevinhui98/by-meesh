@@ -259,13 +259,19 @@ export default function Landing() {
       {/* About */}
       <section className="bg-sidebar text-sidebar-foreground py-24">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <img src="/Logo_3.svg" alt="By Meesh" className="h-16 w-auto mx-auto mb-6" />
+          <img
+            src="/Logo_3.svg"
+            alt="By Meesh"
+            className="h-16 w-auto mx-auto mb-6"
+          />
           <h2 className="text-3xl font-bold mb-6">About Michelle</h2>
           <p className="text-sidebar-foreground/80 text-lg leading-relaxed max-w-2xl mx-auto mb-8">
-            With over a decade of experience in fine dining and private
-            catering, I bring the warmth of a home kitchen and the precision of
-            a restaurant to every table. Every event is personal. Every plate is
-            intentional.
+            by Meesh was created with the vision of creating fun, meaningful
+            moments to bring people together. From her experiences growing up in
+            a house where there were always people gathering - whether around
+            food, mahjong, or just a Tuesday night - Meesh decided it was her
+            mission to bring that sense of warmth, nostalgia, and a good time to
+            the masses.
           </p>
           <div className="flex justify-center gap-8">
             {[
