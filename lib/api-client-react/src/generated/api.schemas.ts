@@ -47,6 +47,11 @@ export interface Dish {
      * @nullable
      */
   targetGp?: number | null;
+  /**
+     * Optional URL to a dish photo
+     * @nullable
+     */
+  imageUrl?: string | null;
   createdAt: string;
 }
 
@@ -71,6 +76,8 @@ export interface CreateDishBody {
      * @nullable
      */
   targetGp?: number | null;
+  /** @nullable */
+  imageUrl?: string | null;
 }
 
 export interface UpdateDishBody {
@@ -94,6 +101,8 @@ export interface UpdateDishBody {
      * @nullable
      */
   targetGp?: number | null;
+  /** @nullable */
+  imageUrl?: string | null;
 }
 
 export type EventRequestStatus = typeof EventRequestStatus[keyof typeof EventRequestStatus];
