@@ -29,22 +29,10 @@ export default function Layout({ children }: { children: ReactNode }) {
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:flex`}
       >
         <div className="px-6 py-6 border-b border-sidebar-border">
-<<<<<<< HEAD
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <ChefHat className="w-7 h-7 text-sidebar-primary" />
-            <div>
-              <div className="font-semibold text-sm tracking-wide text-sidebar-foreground">
-                By Meesh
-              </div>
-              <div className="text-xs text-sidebar-foreground/50">
-                Catering Studio
-              </div>
-            </div>
-=======
           <Link href="/dashboard" className="flex flex-col items-start gap-1">
             <img src="/Logo_1.svg" alt="By Meesh" className="h-6 w-auto" />
             <div className="text-xs text-sidebar-foreground/50">Catering Studio</div>
->>>>>>> main
+
           </Link>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
