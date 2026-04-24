@@ -1,8 +1,93 @@
 import { Link } from "wouter";
-import { ArrowRight, Star, Users, ChefHat } from "lucide-react";
+import { ArrowRight, Star, Users, ChefHat, MessageSquare, FileText, UtensilsCrossed, CalendarCheck, Plus, Minus } from "lucide-react";
+import { useState } from "react";
 import { useGetDishes } from "@workspace/api-client-react";
 
 const DISHES_PREVIEW_COUNT = 6;
+
+const HOW_IT_WORKS = [
+  {
+    icon: MessageSquare,
+    title: "Tell me about your event",
+    description:
+      "Share the date, guest count, and the vibe you're going for. A few sentences is enough to start.",
+  },
+  {
+    icon: FileText,
+    title: "Personalized proposal",
+    description:
+      "Within 24 hours I send back a curated menu, pricing, and anything I'd recommend based on your event.",
+  },
+  {
+    icon: UtensilsCrossed,
+    title: "Tasting & refinement",
+    description:
+      "Optional tasting session for weddings and larger events. We fine-tune courses together before the day.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Event day",
+    description:
+      "I arrive, set up, cook, and plate. You enjoy your guests. Everything leaves cleaner than it started.",
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    quote:
+      '"Michelle made our wedding dinner feel like a love letter on a plate. Guests are still texting me about the short rib."',
+    name: "Sarah K.",
+    event: "Intimate Wedding",
+    guests: 40,
+  },
+  {
+    quote:
+      '"We\'ve used a dozen caterers for client dinners. By Meesh is the only one I\'d book twice in the same month. Precise, warm, effortless."',
+    name: "David L.",
+    event: "Corporate Dinner",
+    guests: 25,
+  },
+  {
+    quote:
+      '"Every course felt personal. She remembered my mom is vegetarian and built a whole parallel menu without me having to ask."',
+    name: "Priya R.",
+    event: "Birthday Celebration",
+    guests: 18,
+  },
+];
+
+const FAQS = [
+  {
+    question: "How far in advance should I book?",
+    answer:
+      "Ideally 4–6 weeks for smaller events, and 2–3 months for weddings or larger gatherings. That said, I occasionally have last-minute availability — reach out and I'll let you know.",
+  },
+  {
+    question: "What's the minimum guest count?",
+    answer:
+      "I work with events of 10 guests and up. For very intimate dinners (under 10), feel free to ask — depending on the season I may be able to accommodate.",
+  },
+  {
+    question: "Do you accommodate dietary restrictions and allergies?",
+    answer:
+      "Absolutely. I design menus around your guests, not the other way around. Share any dietary needs when you book and I'll build them in from the start.",
+  },
+  {
+    question: "What areas do you serve?",
+    answer:
+      "I'm based in New York City and serve the five boroughs plus parts of New Jersey and Connecticut. Travel fees may apply for locations outside Manhattan.",
+  },
+  {
+    question: "Do you provide staff, tableware, and service?",
+    answer:
+      "I handle the cooking and plating. For full-service staffing (servers, bartenders) and rental tableware, I can coordinate with trusted partners — just let me know what you need.",
+  },
+  {
+    question: "How does pricing work?",
+    answer:
+      "Pricing is per-person and varies based on menu complexity, guest count, and event type. After you fill out the booking form I'll send a detailed proposal within 24 hours.",
+  },
+];
 
 const EVENT_TYPES = [
   "Corporate Dinners",
@@ -16,6 +101,7 @@ const EVENT_TYPES = [
 export default function Landing() {
   const { data: dishes } = useGetDishes();
   const previewDishes = (dishes ?? []).slice(0, DISHES_PREVIEW_COUNT);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
     <div className="min-h-screen bg-background">
@@ -186,6 +272,121 @@ export default function Landing() {
                 <span className="text-sm text-sidebar-foreground/70">
                   {label}
                 </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="py-24">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-14">
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
+              How it works
+            </p>
+            <h2 className="text-3xl font-bold text-foreground mb-4">
+              From first message to first course
+            </h2>
+            <p className="text-muted-foreground max-w-lg mx-auto">
+              A simple process, designed to feel effortless from your side.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {HOW_IT_WORKS.map(({ icon: Icon, title, description }, i) => (
+              <div
+                key={title}
+                className="bg-card border border-border rounded-2xl p-6 relative"
+              >
+                <div className="absolute -top-3.5 -left-3.5 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                  {i + 1}
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-accent/60 flex items-center justify-center mb-4">
+                  <Icon className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">{title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="bg-card border-y border-border py-24">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-14">
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
+              Kind words
+            </p>
+            <h2 className="text-3xl font-bold text-foreground">
+              What guests remember
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map(({ quote, name, event, guests }) => (
+              <div
+                key={name}
+                className="bg-background border border-border rounded-2xl p-6 flex flex-col gap-4"
+              >
+                <div className="flex gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className="w-4 h-4 fill-primary text-primary"
+                    />
+                  ))}
+                </div>
+                <p className="text-sm text-foreground leading-relaxed flex-1">
+                  {quote}
+                </p>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {event} · {guests} guests
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-24">
+        <div className="max-w-2xl mx-auto px-6">
+          <div className="text-center mb-14">
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
+              Good to know
+            </p>
+            <h2 className="text-3xl font-bold text-foreground">
+              Frequently asked
+            </h2>
+          </div>
+          <div className="flex flex-col gap-3">
+            {FAQS.map(({ question, answer }, i) => (
+              <div
+                key={question}
+                className="border border-border rounded-xl overflow-hidden"
+              >
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between px-5 py-4 text-left text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  {question}
+                  {openFaq === i ? (
+                    <Minus className="w-4 h-4 text-primary shrink-0 ml-4" />
+                  ) : (
+                    <Plus className="w-4 h-4 text-primary shrink-0 ml-4" />
+                  )}
+                </button>
+                {openFaq === i && (
+                  <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed border-t border-border pt-3">
+                    {answer}
+                  </div>
+                )}
               </div>
             ))}
           </div>
