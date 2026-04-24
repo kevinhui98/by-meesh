@@ -394,7 +394,7 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="py-24">
+      <section className="border-t border-border py-24">
         <div className="max-w-2xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold text-foreground mb-4">
             Ready to start planning?
