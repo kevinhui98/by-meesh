@@ -18,6 +18,8 @@ import {
   DollarSign,
   ClipboardList,
   Check,
+  Phone,
+  MapPin,
 } from "lucide-react";
 
 const STATUS_LABELS = {
@@ -48,7 +50,7 @@ export default function EventDetail() {
     if (!event || event.status === status) return;
     setUpdating(true);
     try {
-      await updateEvent.mutateAsync({ id: eventId, data: { status } });
+      await updateEvent.mutateAsync({ id: eventId, data: { status, clientPhone: event.clientPhone, eventLocation: event.eventLocation } });
       qc.invalidateQueries({ queryKey: getGetEventQueryKey(eventId) });
       qc.invalidateQueries({ queryKey: getGetEventsQueryKey() });
       toast.success("Status updated");
@@ -107,7 +109,9 @@ export default function EventDetail() {
               { icon: Calendar, label: "Date", value: event.eventDate },
               { icon: Users, label: "Guests", value: `${event.guestCount} guests` },
               { icon: Mail, label: "Email", value: event.clientEmail },
+              { icon: Phone, label: "Phone", value: event.clientPhone },
               { icon: ChefHat, label: "Type", value: event.eventType },
+              { icon: MapPin, label: "Location", value: event.eventLocation },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">

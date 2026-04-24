@@ -10,9 +10,11 @@ import { ChefHat, CheckCircle2, ArrowLeft } from "lucide-react";
 const schema = z.object({
   clientName: z.string().min(2, "Name is required"),
   clientEmail: z.string().email("Valid email required"),
+  clientPhone: z.string().min(1, "Phone number is required"),
   eventDate: z.string().min(1, "Event date is required"),
   guestCount: z.coerce.number().int().min(1, "At least 1 guest"),
   eventType: z.string().min(1, "Select an event type"),
+  eventLocation: z.string().min(1, "Event location is required"),
   restrictions: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -43,9 +45,11 @@ export default function Book() {
         data: {
           clientName: data.clientName,
           clientEmail: data.clientEmail,
+          clientPhone: data.clientPhone,
           eventDate: data.eventDate,
           guestCount: data.guestCount,
           eventType: data.eventType,
+          eventLocation: data.eventLocation,
           restrictions: data.restrictions || null,
           notes: data.notes || null,
         },
@@ -125,6 +129,17 @@ export default function Book() {
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">Phone number *</label>
+            <input
+              {...register("clientPhone")}
+              type="tel"
+              placeholder="+1 (555) 000-0000"
+              className="w-full px-3.5 py-2.5 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
+            />
+            {errors.clientPhone && <p className="mt-1 text-xs text-destructive">{errors.clientPhone.message}</p>}
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">Event date *</label>
@@ -146,6 +161,16 @@ export default function Book() {
               />
               {errors.guestCount && <p className="mt-1 text-xs text-destructive">{errors.guestCount.message}</p>}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">Event location *</label>
+            <input
+              {...register("eventLocation")}
+              placeholder="e.g. 123 Main St, San Francisco, CA"
+              className="w-full px-3.5 py-2.5 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
+            />
+            {errors.eventLocation && <p className="mt-1 text-xs text-destructive">{errors.eventLocation.message}</p>}
           </div>
 
           <div>

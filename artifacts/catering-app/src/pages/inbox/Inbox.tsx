@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import Layout from "@/components/Layout";
-import { useGetEvents, getGetEventsQueryKey } from "@workspace/api-client-react";
+import { useGetEvents, getGetEventsQueryKey, GetEventsStatus } from "@workspace/api-client-react";
 import { Calendar, Users, ChevronRight, Inbox as InboxIcon, Plus } from "lucide-react";
 
 const TABS = [
@@ -34,7 +34,7 @@ const STATUS_LABEL: Record<string, string> = {
 export default function Inbox() {
   const [activeTab, setActiveTab] = useState<Tab>("all");
 
-  const apiStatus = activeTab !== "all" ? (API_STATUS[activeTab] ?? activeTab) : undefined;
+  const apiStatus = activeTab !== "all" ? (API_STATUS[activeTab] ?? activeTab) as GetEventsStatus : undefined;
   const { data: events, isLoading } = useGetEvents(
     apiStatus ? { status: apiStatus } : {},
     { query: { queryKey: getGetEventsQueryKey(apiStatus ? { status: apiStatus } : {}) } }

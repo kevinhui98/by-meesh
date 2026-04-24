@@ -482,11 +482,15 @@ components:
           type: string
         clientEmail:
           type: string
+        clientPhone:
+          type: string
         eventDate:
           type: string
         guestCount:
           type: integer
         eventType:
+          type: string
+        eventLocation:
           type: string
         restrictions:
           type: ["string", "null"]
@@ -501,9 +505,11 @@ components:
         - id
         - clientName
         - clientEmail
+        - clientPhone
         - eventDate
         - guestCount
         - eventType
+        - eventLocation
         - status
         - createdAt
 
@@ -514,11 +520,15 @@ components:
           type: string
         clientEmail:
           type: string
+        clientPhone:
+          type: string
         eventDate:
           type: string
         guestCount:
           type: integer
         eventType:
+          type: string
+        eventLocation:
           type: string
         restrictions:
           type: ["string", "null"]
@@ -527,9 +537,11 @@ components:
       required:
         - clientName
         - clientEmail
+        - clientPhone
         - eventDate
         - guestCount
         - eventType
+        - eventLocation
 
     UpdateEventBody:
       type: object
@@ -541,16 +553,23 @@ components:
           type: string
         clientEmail:
           type: string
+        clientPhone:
+          type: string
         eventDate:
           type: string
         guestCount:
           type: integer
         eventType:
           type: string
+        eventLocation:
+          type: string
         restrictions:
           type: ["string", "null"]
         notes:
           type: ["string", "null"]
+      required:
+        - clientPhone
+        - eventLocation
 
     # ── Menu ──
     MenuEntry:

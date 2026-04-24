@@ -336,9 +336,11 @@ async function seed() {
     {
       clientName: "Mikaela O'Donohue & Jessica",
       clientEmail: "jessica@theauthenticcollective.com",
+      clientPhone: "+1 (415) 555-0100",
       eventDate: "2026-02-05",
       guestCount: 18,
       eventType: "Career Clarity Workshop and Family-Style Dinner",
+      eventLocation: "The Hub, San Francisco, CA",
       restrictions:
         "2 vegetarian guests; 1 nut allergy; 1 gluten allergy. Menu already designed to accommodate — confirm GF substitutions for Wood Ear Mushroom Salad, Braised Beef Jook, Kohlrabi Salad, and Yuzu Key Lime Pie.",
       notes:

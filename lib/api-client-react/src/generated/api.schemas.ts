@@ -109,9 +109,11 @@ export interface EventRequest {
   id: number;
   clientName: string;
   clientEmail: string;
+  clientPhone: string;
   eventDate: string;
   guestCount: number;
   eventType: string;
+  eventLocation: string;
   /** @nullable */
   restrictions?: string | null;
   /** @nullable */
@@ -123,9 +125,11 @@ export interface EventRequest {
 export interface CreateEventBody {
   clientName: string;
   clientEmail: string;
+  clientPhone: string;
   eventDate: string;
   guestCount: number;
   eventType: string;
+  eventLocation: string;
   /** @nullable */
   restrictions?: string | null;
   /** @nullable */
@@ -145,9 +149,11 @@ export interface UpdateEventBody {
   status?: UpdateEventBodyStatus;
   clientName?: string;
   clientEmail?: string;
+  clientPhone: string;
   eventDate?: string;
   guestCount?: number;
   eventType?: string;
+  eventLocation: string;
   /** @nullable */
   restrictions?: string | null;
   /** @nullable */
