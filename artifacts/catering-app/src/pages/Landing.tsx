@@ -1,5 +1,16 @@
 import { Link } from "wouter";
-import { ArrowRight, Star, Users, ChefHat, MessageSquare, FileText, UtensilsCrossed, CalendarCheck, Plus, Minus } from "lucide-react";
+import {
+  ArrowRight,
+  Star,
+  Users,
+  ChefHat,
+  MessageSquare,
+  FileText,
+  UtensilsCrossed,
+  CalendarCheck,
+  Plus,
+  Minus,
+} from "lucide-react";
 import { useState } from "react";
 import { useGetDishes } from "@workspace/api-client-react";
 
@@ -42,7 +53,7 @@ const TESTIMONIALS = [
   },
   {
     quote:
-      '"We\'ve used a dozen caterers for client dinners. By Meesh is the only one I\'d book twice in the same month. Precise, warm, effortless."',
+      "\"We've used a dozen caterers for client dinners. By Meesh is the only one I'd book twice in the same month. Precise, warm, effortless.\"",
     name: "David L.",
     event: "Corporate Dinner",
     guests: 25,
@@ -116,7 +127,7 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-3">
             <Link href="/sign-in">
-              <button className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5">
+              <button className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 invisible">
                 Owner Login
               </button>
             </Link>
@@ -343,7 +354,9 @@ export default function Landing() {
                   {quote}
                 </p>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{name}</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {name}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {event} · {guests} guests
                   </p>

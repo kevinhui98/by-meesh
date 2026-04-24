@@ -14,7 +14,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/inbox", label: "Inbox", icon: Inbox },
   { href: "/dishes", label: "Dish Library", icon: BookOpen },
-  { href: "/procurement", label: "Procurement", icon: ShoppingBasket },
+  // { href: "/procurement", label: "Procurement", icon: ShoppingBasket },
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -32,8 +32,12 @@ export default function Layout({ children }: { children: ReactNode }) {
           <Link href="/dashboard" className="flex items-center gap-3">
             <ChefHat className="w-7 h-7 text-sidebar-primary" />
             <div>
-              <div className="font-semibold text-sm tracking-wide text-sidebar-foreground">By Meesh</div>
-              <div className="text-xs text-sidebar-foreground/50">Catering Studio</div>
+              <div className="font-semibold text-sm tracking-wide text-sidebar-foreground">
+                By Meesh
+              </div>
+              <div className="text-xs text-sidebar-foreground/50">
+                Catering Studio
+              </div>
             </div>
           </Link>
         </div>
@@ -41,11 +45,15 @@ export default function Layout({ children }: { children: ReactNode }) {
           {navItems.map(({ href, label, icon: Icon }) => {
             const active = location.startsWith(href);
             return (
-              <Link key={href} href={href}
+              <Link
+                key={href}
+                href={href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  ${active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"}`}
+                  ${
+                    active
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  }`}
                 onClick={() => setMobileOpen(false)}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -70,14 +78,20 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       {/* Mobile overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setMobileOpen(false)} />
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
       )}
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
         <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card">
-          <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg hover:bg-muted">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-1.5 rounded-lg hover:bg-muted"
+          >
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2 text-sm font-semibold">
@@ -86,9 +100,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
           <div className="w-8" />
         </div>
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
+        <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
   );
