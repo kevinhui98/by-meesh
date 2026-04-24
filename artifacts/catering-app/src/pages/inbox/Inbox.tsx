@@ -8,23 +8,36 @@ const TABS = [
   { key: "all", label: "All" },
   { key: "new", label: "New" },
   { key: "in_progress", label: "In Progress" },
-  { key: "confirmed", label: "Done" },
+  { key: "done", label: "Done" },
 ] as const;
 
 type Tab = typeof TABS[number]["key"];
+
+const API_STATUS: Record<string, string> = {
+  done: "confirmed",
+};
 
 const STATUS_STYLES: Record<string, string> = {
   new: "bg-blue-100 text-blue-700",
   in_progress: "bg-amber-100 text-amber-700",
   confirmed: "bg-green-100 text-green-700",
+  done: "bg-green-100 text-green-700",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  new: "new",
+  in_progress: "in progress",
+  confirmed: "done",
+  done: "done",
 };
 
 export default function Inbox() {
   const [activeTab, setActiveTab] = useState<Tab>("all");
 
+  const apiStatus = activeTab !== "all" ? (API_STATUS[activeTab] ?? activeTab) : undefined;
   const { data: events, isLoading } = useGetEvents(
-    activeTab !== "all" ? { status: activeTab } : {},
-    { query: { queryKey: getGetEventsQueryKey(activeTab !== "all" ? { status: activeTab } : {}) } }
+    apiStatus ? { status: apiStatus } : {},
+    { query: { queryKey: getGetEventsQueryKey(apiStatus ? { status: apiStatus } : {}) } }
   );
 
   return (
@@ -75,7 +88,7 @@ export default function Inbox() {
                       <div className="flex items-center gap-3 mb-1.5">
                         <h3 className="font-medium text-foreground text-sm">{event.clientName}</h3>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[event.status]}`}>
-                          {event.status.replace("_", " ")}
+                          {STATUS_LABEL[event.status] ?? event.status.replace("_", " ")}
                         </span>
                       </div>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
